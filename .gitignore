@@ -1,0 +1,16 @@
+#
+node_modules
+
+# Builds
+dist
+build
+
+# IDE
+.idea/
+
+# Agent
+.claude
+
+# Dev
+postgres_data
+qdrant_data

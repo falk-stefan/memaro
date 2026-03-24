@@ -1,0 +1,78 @@
+#
+# Memaro default configuration
+#
+
+# Tools
+# -----
+# It is optional to define individual tools. It allows users to customize instructions
+# for LLM agents. If not defined, the default instructions will be used which are defined
+# below.
+tools:
+
+  search_memories:
+    description: |
+      Search for relevant memories when the task may benefit from prior knowledge.
+      Use this before solving problems that involve existing systems, decisions, or recurring patterns.
+
+  add_memory:
+    description: |
+      Add knowledge across chat sessions. Always categorize with relevant tags. 
+      Focus on insights, discoveries, or surprising findings.
+      Good candidates:
+      - architectural decisions
+      - non-obvious fixes or workarounds
+      - important domain knowledge
+      - reusable patterns
+      Think: If all knowledge were lost, what should search_memories return?
+
+  link_memory:
+    description: |
+      Link memories when one provides context or explanation for another.
+      Create links when the relationship is meaningful and improves understanding.
+      Linking improves search relevance and context discovery.
+
+  update_memory:
+    description: |
+      Update an existing memory whenever information changes. 
+      Ensure it remains accurate and relevant. 
+      Ask the user if unsure about updates.
+
+  get_memory:
+    description: |
+      Retrieve a memory by its ID.
+
+  remove_memory:
+    description: |
+      Delete duplicate or obsolete memories. 
+      Do not remove unless confirmed redundant. 
+      Prefer updating instead.
+
+  add_tag:
+    description: |
+      Create a new tag only if no existing tag clearly fits.  
+      Prefer reusing existing tags to maintain consistency.  
+      Tag names should be:
+        - short
+        - consistent
+        - not redundant with existing tags  
+      Examples:
+        - "auth" instead of "authentication-system"
+
+  search_tags:
+    description: |
+      Search existing tags before creating new ones. Use semantic queries to find the best match.
+
+# Resources
+# ---------
+# This section allows users to define memory types and available relations.
+# The types and relations are used to categorize memories and establish relationships.
+resources:
+  memory:
+    types:
+      fact:
+        description: |
+          - Stable knowledge about systems, components, or behavior
+      decision:
+        description: |
+          - Reasoning behind architectural or implementation choices
+    relations: ['explains', 'explainedBy']

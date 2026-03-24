@@ -1,0 +1,41 @@
+{
+  "name": "memaro",
+  "version": "0.0.1",
+  "description": "",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "start": "node dist/index.js",
+    "dev": "tsoa spec-and-routes && tsx watch src/index.ts",
+    "build": "tsoa spec-and-routes && tsc",
+    "tsoa:spec-and-routes": "tsoa spec-and-routes",
+    "db:migrate": "ts-node -r tsconfig-paths/register ./node_modules/sequelize-cli/lib/sequelize db:migrate",
+    "db:migrate:undo": "ts-node -r tsconfig-paths/register ./node_modules/sequelize-cli/lib/sequelize db:migrate:undo"
+  },
+  "keywords": [],
+  "author": "Stefan Falk",
+  "license": "ISC",
+  "packageManager": "pnpm@10.33.0",
+  "dependencies": {
+    "@huggingface/transformers": "^3.8.1",
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@qdrant/js-client-rest": "^1.17.0",
+    "@tsoa/runtime": "7.0.0-alpha.0",
+    "express": "^5.2.1",
+    "sequelize-typescript": "^2.1.6",
+    "ts-node": "^10.9.2",
+    "tsoa": "7.0.0-alpha.0",
+    "tsx": "^4.21.0",
+    "yaml": "^2.8.3",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.5.0",
+    "pg": "^8.20.0",
+    "sequelize": "^6.37.8",
+    "sequelize-cli": "^6.6.5",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^6.0.2"
+  }
+}
