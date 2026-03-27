@@ -1,38 +1,42 @@
 import {CreateTag, TagQuery} from "../dto/tag.dto.js";
 import {TagEntity} from "../db/table/tag.entity.js";
-import {qdrantClient} from "../qdrant.js";
+import {qdrantClient} from "../db/qdrant.js";
 import {withTransaction} from "../db/db.util.js";
 import {toTag} from "../dto/mapper/tag.mapper.js";
 import {embed} from "./embedding.service.js";
+import {ApiError} from "../error.js";
 
 
-export const createTag = async (create: CreateTag) => {
-  const embedding = await embed(create.description);
+export class TagService {
 
-  const tagEntity = await withTransaction(async (options) => {
-    const created = await TagEntity.create(create, options);
-    await upsertTag({tagEntity: created, embedding, payload: create});
-    return created;
-  })
-  return toTag(tagEntity);
-}
+  static async createTag  (create: CreateTag)  {
+    const embedding = await embed(create.description);
 
-export const getTags = async (query: TagQuery) => {
-  const {text, limit = 10} = query;
+    const tagEntity = await withTransaction(async (options) => {
+      const created = await TagEntity.create(create, options);
+      await upsertTag({tagEntity: created, embedding, payload: create});
+      return created;
+    })
+    return toTag(tagEntity);
+  }
 
-  const embedding = await embed(text);
+  static async   getTags (query: TagQuery)  {
+    const {text, limit = 10} = query;
 
-  const qdrandResult = await qdrantClient.search('tag', {
-    vector: embedding,
-    limit: limit,
-    with_payload: true
-  });
+    const embedding = await embed(text);
 
-  const ids = qdrandResult.map(r => r.id);
+    const qdrandResult = await qdrantClient.search('tag', {
+      vector: embedding,
+      limit: limit,
+      with_payload: true
+    });
 
-  const tags = await TagEntity.findAll({where: {id: ids}});
+    const ids = qdrandResult.map(r => r.id);
 
-  return tags.map(toTag);
+    const tags = await TagEntity.findAll({where: {id: ids}});
+
+    return tags.map(toTag);
+  }
 }
 
 const upsertTag = async (
@@ -57,4 +61,33 @@ const upsertTag = async (
     console.error("Error while updating tag", JSON.stringify(e, null, 2));
     throw e
   }
+}
+
+
+export const findTagsElseThrow = async (tags?: string[]) => {
+
+  if (!tags || !tags.length) {
+    return [];
+  }
+
+  const tagEntities = await TagEntity.findAll({where: {name: tags}});
+
+  if (tagEntities.length === tags.length) {
+    return [];
+  }
+
+  const missing = [];
+
+  for (const tagName of tags) {
+    const exists = tagEntities.find((tag) => tag.name === tagName);
+    if (!exists) {
+      missing.push(tagName);
+    }
+  }
+
+  if (missing.length > 0) {
+    throw new ApiError(404, `Tags do not exist: ${missing.join(', ')}. Please create them first.`)
+  }
+
+  return tagEntities;
 }

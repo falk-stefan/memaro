@@ -1,5 +1,5 @@
 import {Memory, MemorySearchResult} from "../memory.dto.js";
-import {MemoryRelation} from "../memory-relation.dt.js";
+import {MemoryRelation} from "../memory-relation.dto.js";
 import {MemoryEntity} from "../../db/table/memory.entity.js";
 import {MemoryRelationEntity} from "../../db/table/memory-relation.entity.js";
 

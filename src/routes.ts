@@ -115,7 +115,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Record_string.unknown_": {
         "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{},"validators":{}},
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{},"additionalProperties":{"dataType":"any"},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 };
@@ -286,36 +286,6 @@ export function RegisterRoutes(app: Router) {
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsMemoryController_getMemory: Record<string, TsoaRoute.ParameterSchema> = {
-                id: {"in":"path","name":"id","required":true,"dataType":"string"},
-        };
-        app.get('/v1/memories/:id',
-            ...(fetchMiddlewares<RequestHandler>(MemoryController)),
-            ...(fetchMiddlewares<RequestHandler>(MemoryController.prototype.getMemory)),
-
-            async function MemoryController_getMemory(request: ExRequest, response: ExResponse, next: any) {
-
-            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-
-            let validatedArgs: any[] = [];
-            try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsMemoryController_getMemory, request, response });
-
-                const controller = new MemoryController();
-
-              await templateService.apiHandler({
-                methodName: 'getMemory',
-                controller,
-                response,
-                next,
-                validatedArgs,
-                successStatus: undefined,
-              });
-            } catch (err) {
-                return next(err);
-            }
-        });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsMemoryController_deleteMemory: Record<string, TsoaRoute.ParameterSchema> = {
                 id: {"in":"path","name":"id","required":true,"dataType":"string"},
         };
@@ -407,24 +377,25 @@ export function RegisterRoutes(app: Router) {
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsMcpController_getTools: Record<string, TsoaRoute.ParameterSchema> = {
+        const argsMemoryRelationsController_deleteMemoryRelation: Record<string, TsoaRoute.ParameterSchema> = {
+                id: {"in":"path","name":"id","required":true,"dataType":"string"},
         };
-        app.get('/mcp/tools',
-            ...(fetchMiddlewares<RequestHandler>(McpController)),
-            ...(fetchMiddlewares<RequestHandler>(McpController.prototype.getTools)),
+        app.delete('/v1/memory-relations/:id',
+            ...(fetchMiddlewares<RequestHandler>(MemoryRelationsController)),
+            ...(fetchMiddlewares<RequestHandler>(MemoryRelationsController.prototype.deleteMemoryRelation)),
 
-            async function McpController_getTools(request: ExRequest, response: ExResponse, next: any) {
+            async function MemoryRelationsController_deleteMemoryRelation(request: ExRequest, response: ExResponse, next: any) {
 
             // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
             let validatedArgs: any[] = [];
             try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsMcpController_getTools, request, response });
+                validatedArgs = templateService.getValidatedArgs({ args: argsMemoryRelationsController_deleteMemoryRelation, request, response });
 
-                const controller = new McpController();
+                const controller = new MemoryRelationsController();
 
               await templateService.apiHandler({
-                methodName: 'getTools',
+                methodName: 'deleteMemoryRelation',
                 controller,
                 response,
                 next,
@@ -436,24 +407,25 @@ export function RegisterRoutes(app: Router) {
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsMcpController_callTool: Record<string, TsoaRoute.ParameterSchema> = {
+        const argsMcpController_callMcp: Record<string, TsoaRoute.ParameterSchema> = {
+                body: {"in":"body","name":"body","required":true,"ref":"Record_string.unknown_"},
         };
-        app.post('/mcp/call',
+        app.post('/mcp',
             ...(fetchMiddlewares<RequestHandler>(McpController)),
-            ...(fetchMiddlewares<RequestHandler>(McpController.prototype.callTool)),
+            ...(fetchMiddlewares<RequestHandler>(McpController.prototype.callMcp)),
 
-            async function McpController_callTool(request: ExRequest, response: ExResponse, next: any) {
+            async function McpController_callMcp(request: ExRequest, response: ExResponse, next: any) {
 
             // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
             let validatedArgs: any[] = [];
             try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsMcpController_callTool, request, response });
+                validatedArgs = templateService.getValidatedArgs({ args: argsMcpController_callMcp, request, response });
 
                 const controller = new McpController();
 
               await templateService.apiHandler({
-                methodName: 'callTool',
+                methodName: 'callMcp',
                 controller,
                 response,
                 next,

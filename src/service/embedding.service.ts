@@ -1,4 +1,5 @@
 import {pipeline, Tensor} from '@huggingface/transformers'
+import {ApiError} from "../error.js";
 
 const generator = await pipeline(
     'feature-extraction',
@@ -6,14 +7,20 @@ const generator = await pipeline(
     'sentence-transformers/all-MiniLM-L6-v2'
 );
 
-export const embed = async (text: string) => {
+export const embed = async (text: string): Promise<number[]> => {
 
     const result: Tensor = await generator(text, {
         pooling: 'mean',
         normalize: true,
     });
 
-    return result.tolist()[0];
+    const embedding: number[] | undefined = result.tolist()[0];
+
+    if (!embedding) {
+        throw new ApiError(500, 'An unexpected error occurred while embedding the text.');
+    }
+
+    return embedding;
 }
 
 

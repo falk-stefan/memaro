@@ -1,5 +1,5 @@
 import {Body, Get, Post, Queries, Route} from "@tsoa/runtime";
-import {createTag, getTags} from "../service/tag.service.js";
+import {TagService} from "../service/tag.service.js";
 import {CreateTag, TagQuery} from "../dto/tag.dto.js";
 
 
@@ -7,12 +7,12 @@ import {CreateTag, TagQuery} from "../dto/tag.dto.js";
 export class TagController {
     @Post()
     public async createTag(@Body() create: CreateTag) {
-        return createTag(create);
+        return TagService.createTag(create);
     }
 
     @Get()
     public async getTags(@Queries() query: TagQuery) {
-        return getTags(query)
+        return TagService.getTags(query)
     }
 
 }

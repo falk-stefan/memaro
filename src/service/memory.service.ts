@@ -1,122 +1,114 @@
 import {CreateMemory, Memory, MemoryQuery, UpdateMemory} from "../dto/memory.dto.js";
 import {embed} from "./embedding.service.js";
-import {qdrantClient} from "../qdrant.js";
+import {qdrantClient} from "../db/qdrant.js";
 import {MemoryEntity} from "../db/table/memory.entity.js";
-import {ApiError, NotFoundError} from "../error.js";
+import {NotFoundError} from "../error.js";
 import {removeUndefinedAndValidate, UpdateValues} from "./dto.util.js";
 import {MemoryRelationEntity} from "../db/table/memory-relation.entity.js";
 import {withTransaction} from "../db/db.util.js";
 import {toMemory, toMemorySearchResult} from "../dto/mapper/memory.mapper.js";
-import {loadMemaroConfig} from "../tools/tools.config.js";
-
-const memaroConfig = await loadMemaroConfig();
-const verifyTypeElseThrow = (value: string) => {
-  const memoryTypes = Object.keys(memaroConfig.resources.memory.types);
-  if (!memoryTypes.includes(value)) {
-    throw new ApiError(400, `Invalid memory type: ${value}. Allowed types: ${memoryTypes.join(', ')}`);
-  }
-}
-
-export const createMemory = async (create: CreateMemory): Promise<Memory> => {
-
-  verifyTypeElseThrow(create.type);
-
-  const embedding = await embed(create.text);
-
-  const memoryEntity = await withTransaction(async (options) => {
-    const created = await MemoryEntity.create(create, options);
-    await upsertMemory({memoryEntity: created, embedding, payload: create});
-    return created;
-  });
-
-  return toMemory(memoryEntity);
-}
+import {verifyTypeElseThrow} from "../validation/verify.js";
+import {findTagsElseThrow} from "./tag.service.js";
+import {MemoriesView} from "../db/view/memory.view.js";
 
 
-export const getMemory = async (id: string): Promise<Memory> => {
-  const memoryEntity = await MemoryEntity.findOne({where: {id}});
-  if (!memoryEntity) {
-    throw new NotFoundError('memory');
-  }
-  return toMemory(memoryEntity);
-}
+export class MemoryService {
 
+  static async createMemory(create: CreateMemory): Promise<Memory> {
 
-export const getMemories = async (query: MemoryQuery) => {
-  const {text, type, limit = 10} = query;
+    verifyTypeElseThrow(create.type);
 
-  const embedding = await embed(text);
+    const tags = await findTagsElseThrow(create.tags);
 
-  const must = type ? [{key: 'type', match: {value: type}}] : [];
+    const embedding = await embed(create.text);
 
-  const qdrandResult = await qdrantClient.search('memory', {
-    vector: embedding,
-    filter: {must: must,},
-    limit: limit,
-    with_payload: true
-  });
+    const memoryEntity = await withTransaction(async (options) => {
 
-  const ids = qdrandResult.map(r => r.id);
-  const memories = await MemoryEntity.findAll({
-    attributes: ['id', 'text', 'type'],
-    include: [{
-      model: MemoryRelationEntity,
-      attributes: ['sourceId', 'targetId', 'type'],
-      include: [{
-        model: MemoryEntity,
-        attributes: ['id', 'text', 'type'],
-        as: 'target'
-      }],
-      limit: 10
-    }],
-    where: {id: ids}
-  });
+      const created = await MemoryEntity.create(create, options);
+      await created.$set('tags', tags, options);
 
-  return toMemorySearchResult(memories, qdrandResult);
-}
+      await upsertMemory({memoryEntity: created, embedding, payload: create});
 
+      return created;
+    });
 
-export const updateMemory = async ({id, values}: UpdateValues<UpdateMemory>) => {
-  const sanitized = removeUndefinedAndValidate(values)
-
-  const memoryEntity = await MemoryEntity.findOne({where: {id}});
-  if (!memoryEntity) {
-    throw new NotFoundError('memory');
+    return toMemory(memoryEntity);
   }
 
-  if (sanitized.text) {
-    const embedding = await embed(sanitized.text);
-    await upsertMemory({memoryEntity, embedding, payload: sanitized});
+  static async updateMemory({id, values}: UpdateValues<UpdateMemory>) {
+    const sanitized = removeUndefinedAndValidate(values)
+
+    const memoryEntity = await MemoryEntity.findOne({where: {id}});
+    if (!memoryEntity) {
+      throw new NotFoundError('memory');
+    }
+
+    if (sanitized.text) {
+      const embedding = await embed(sanitized.text);
+      await upsertMemory({memoryEntity, embedding, payload: sanitized});
+    }
+
+    if (sanitized.type) {
+      verifyTypeElseThrow(sanitized.type);
+    }
+
+    await memoryEntity.update(sanitized);
   }
 
-  if (sanitized.type) {
-    verifyTypeElseThrow(sanitized.type);
+
+  static async getMemory(id: string): Promise<Memory> {
+    const memoryEntity = await MemoryEntity.findOne({where: {id}});
+    if (!memoryEntity) {
+      throw new NotFoundError('memory');
+    }
+    return toMemory(memoryEntity);
   }
 
-  await memoryEntity.update(sanitized);
+  static async getMemories(query: MemoryQuery) {
+    const {text, type, limit = 10} = query;
+
+    const embedding = await embed(text);
+
+    const must = type ? [{key: 'type', match: {value: type}}] : [];
+
+    const qdrantResult = await qdrantClient.search('memory', {
+      vector: embedding,
+      filter: {must: must,},
+      limit: limit,
+      with_payload: true
+    });
+
+    const ids = qdrantResult.map(r => r.id);
+    const memories = await MemoryEntity.findAll(MemoriesView({ids}));
+
+    return toMemorySearchResult(memories, qdrantResult);
+  }
+
+  static async deleteMemory (id: string) {
+    const memoryEntity = await MemoryEntity.findOne({where: {id}});
+    if (!memoryEntity) {
+      throw new NotFoundError('memory');
+    }
+
+    await qdrantClient.delete('memory', {
+      wait: true,
+      filter: {must: [{key: 'id', match: {value: Number(id)}}]},
+    });
+
+    await memoryEntity.destroy();
+  }
+
+
 }
 
 
-export const deleteMemory = async (id: string) => {
-  const memoryEntity = await MemoryEntity.findOne({where: {id}});
-  if (!memoryEntity) {
-    throw new NotFoundError('memory');
-  }
-
-  await qdrantClient.delete('memory', {
-    wait: true,
-    filter: {must: [{key: 'id', match: {value: Number(id)}}]},
-  });
-
-  await memoryEntity.destroy();
-}
 
 const upsertMemory = async (
-  params: {
-    memoryEntity: MemoryEntity,
-    embedding: number [],
-    payload: CreateMemory | UpdateMemory
-  }
+    params: {
+      memoryEntity: MemoryEntity,
+      embedding: number [],
+      payload: CreateMemory | UpdateMemory
+    }
 ) => {
   try {
     await qdrantClient.upsert('memory', {

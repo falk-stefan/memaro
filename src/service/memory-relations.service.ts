@@ -1,5 +1,5 @@
 import {MemoryRelationEntity} from "../db/table/memory-relation.entity.js";
-import {CreateMemoryRelation, type UpdateMemoryRelation} from "../dto/memory-relation.dt.js";
+import {CreateMemoryRelation, type UpdateMemoryRelation} from "../dto/memory-relation.dto.js";
 import {removeUndefinedAndValidate, UpdateValues} from "./dto.util.js";
 import {toMemoryRelation} from "../dto/mapper/memory.mapper.js";
 import {loadMemaroConfig} from "../tools/tools.config.js";
@@ -13,32 +13,34 @@ const verifyRelationTypeElseThrow = (value: string) => {
     }
 }
 
-export const createMemoryRelation = async (create: CreateMemoryRelation) => {
+export class MemoryRelationsService {
 
-    verifyRelationTypeElseThrow(create.type);
-    const memoryRelationEntity = await MemoryRelationEntity.create(create)
+    static async createMemoryRelation(create: CreateMemoryRelation) {
+        verifyRelationTypeElseThrow(create.type);
+        const memoryRelationEntity = await MemoryRelationEntity.create(create)
 
-    return toMemoryRelation(memoryRelationEntity);
-};
+        return toMemoryRelation(memoryRelationEntity);
+    };
 
-export const updateMemoryRelations = async ({id, values}: UpdateValues<UpdateMemoryRelation>) => {
-    const sanitized = removeUndefinedAndValidate(values);
+    static async updateMemoryRelations({id, values}: UpdateValues<UpdateMemoryRelation>) {
+        const sanitized = removeUndefinedAndValidate(values);
 
-    if (sanitized.type) {
-        verifyRelationTypeElseThrow(sanitized.type);
+        if (sanitized.type) {
+            verifyRelationTypeElseThrow(sanitized.type);
+        }
+
+        await MemoryRelationEntity.update(sanitized, {where: {id}});
+        return sanitized;
+    };
+
+    static async deleteMemoryRelations(id: string) {
+
+        const memoryRelationEntity = await MemoryRelationEntity.findOne({where: {id}});
+
+        if (!memoryRelationEntity) {
+            throw new NotFoundError('memory relation');
+        }
+
+        await memoryRelationEntity.destroy();
     }
-
-    await MemoryRelationEntity.update(sanitized, {where: {id}});
-    return sanitized;
-};
-
-export const deleteMemoryRelations = async (id: string) => {
-
-    const memoryRelationEntity = await MemoryRelationEntity.findOne({where: {id}});
-
-    if (!memoryRelationEntity) {
-        throw new NotFoundError('memory relation');
-    }
-
-    await memoryRelationEntity.destroy();
-};
+}

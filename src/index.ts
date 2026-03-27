@@ -5,9 +5,7 @@ import {sequelizeClient} from "./db/sequelize.js";
 import express, {json, urlencoded} from "express";
 import {RegisterRoutes} from "./routes.js";
 import {ApiError} from "./error.js";
-import * as fs from "node:fs";
-import {parse} from "yaml";
-import {MemaroConfigSchema} from "./config.schema.js";
+
 
 /**
  * Main function for the express server.
@@ -30,6 +28,9 @@ async function expressMain() {
   app.get('/', (req, res) => {
     res.send('Hello World!!');
   });
+  app.post('/', (req, res) => {
+    res.send('Hello World!!');
+  });
 
   RegisterRoutes(app);
 
@@ -39,8 +40,9 @@ async function expressMain() {
     }
 
     if (err instanceof ApiError) {
-      res.status(err.code).send(err);
+      return res.status(err.code).send(err);
     }
+
     res.status(500)
       .send(new ApiError(500, "An unexpected error occurred."));
   });
@@ -102,13 +104,6 @@ function main(mode: string = 'standalone') {
     throw new Error(`Unknown mode: ${mode}`);
   }
 
-  const memaroConfig = parse(fs.readFileSync('./config.yaml', 'utf8'));
-  const {data: config, error} = MemaroConfigSchema.safeParse(memaroConfig);
-
-  if (!config) {
-    throw error;
-  }
-
   console.error("Memaro starting in mode:", mode);
 
   switch (mode) {
@@ -123,10 +118,10 @@ function main(mode: string = 'standalone') {
         console.error("Fatal error in main():", error);
         process.exit(1);
       });
-      expressMain();
+      expressMain().then( );
       break;
     case 'server':
-      expressMain();
+      expressMain().then();
       break;
     default:
       throw new Error(`Unknown mode: ${mode}`);

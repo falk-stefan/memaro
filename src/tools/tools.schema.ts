@@ -62,7 +62,7 @@ export const UpdateMemorySchema = z.object({
 /**
  * Remove Memory
  */
-export const RemoveMemorySchema = z.object({
+export const DeleteMemorySchema = z.object({
     id: z.string().nonempty(),
 });
 
