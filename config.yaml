@@ -1,41 +1,56 @@
 #
-# Memaro default configuration
+# Memaro product-focused configuration (minimal, search-first)
 #
 
-# Tools
-# -----
-# It is optional to define individual tools. It allows users to customize instructions
-# for LLM agents. If not defined, the default instructions will be used which are defined
-# below.
 tools:
 
   search_memories:
     description: |
-      Search for relevant memories when the task may benefit from prior knowledge.
-      Use this before solving problems that involve existing systems, decisions, or recurring patterns.
+      MANDATORY FIRST STEP.
+      For every new request or session, you must search for existing memories before doing anything else.
+      Do not proceed without calling this tool.
+      Goal: reuse prior knowledge about the product, its purpose, and direction.
+
+      If results are missing, unclear, or insufficient:
+      - ask the user for product context before proceeding
 
   add_memory:
     description: |
-      Add knowledge across chat sessions. Always categorize with relevant tags. 
-      Focus on insights, discoveries, or surprising findings.
-      Good candidates:
-      - architectural decisions
-      - non-obvious fixes or workarounds
-      - important domain knowledge
-      - reusable patterns
-      Think: If all knowledge were lost, what should search_memories return?
+      Always store new knowledge after each interaction.
 
-  link_memory:
-    description: |
-      Link memories when one provides context or explanation for another.
-      Create links when the relationship is meaningful and improves understanding.
-      Linking improves search relevance and context discovery.
+      PRIORITY:
+      - WHAT we are building (features, product scope, user value)
+      - WHY it exists (user problems, motivations, goals)
+
+      AVOID:
+      - low-level technical details
+      - implementation specifics unless they explain the WHY
+
+      Store only clear, reusable product insights.
+      Keep it concise and high-signal.
 
   update_memory:
     description: |
-      Update an existing memory whenever information changes. 
-      Ensure it remains accurate and relevant. 
-      Ask the user if unsure about updates.
+      Update memories when the product direction, goals, or assumptions change.
+      Prefer updating over creating duplicates.
+      Ensure the "WHAT" and "WHY" stay accurate.
+
+  link_memory:
+    description: |
+      Link related product insights when one explains or justifies another.
+      Focus on connecting:
+      - features → user problems
+      - decisions → motivations
+
+  search_tags:
+    description: |
+      Always search for existing tags before creating new ones.
+      Prefer simple, product-oriented tags.
+
+  add_tag:
+    description: |
+      Only create tags if necessary.
+      Tags must reflect product meaning (e.g. "onboarding", "pricing", "target-user").
 
   get_memory:
     description: |
@@ -47,32 +62,17 @@ tools:
       Do not remove unless confirmed redundant. 
       Prefer updating instead.
 
-  add_tag:
-    description: |
-      Create a new tag only if no existing tag clearly fits.  
-      Prefer reusing existing tags to maintain consistency.  
-      Tag names should be:
-        - short
-        - consistent
-        - not redundant with existing tags  
-      Examples:
-        - "auth" instead of "authentication-system"
-
-  search_tags:
-    description: |
-      Search existing tags before creating new ones. Use semantic queries to find the best match.
-
-# Resources
-# ---------
-# This section allows users to define memory types and available relations.
-# The types and relations are used to categorize memories and establish relationships.
 resources:
   memory:
     types:
-      fact:
+      product:
         description: |
-          - Stable knowledge about systems, components, or behavior
-      decision:
+          - Defines WHAT the product does
+          - Captures features, flows, and user-facing behavior
+
+      rationale:
         description: |
-          - Reasoning behind architectural or implementation choices
-    relations: ['explains', 'explainedBy']
+          - Explains WHY the product or feature exists
+          - Includes user problems, goals, and motivations
+
+    relations: ['explains']
