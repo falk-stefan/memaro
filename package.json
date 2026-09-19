@@ -10,7 +10,8 @@
     "build": "tsoa spec-and-routes && tsc",
     "tsoa:spec-and-routes": "tsoa spec-and-routes",
     "db:migrate": "ts-node -r tsconfig-paths/register ./node_modules/sequelize-cli/lib/sequelize db:migrate",
-    "db:migrate:undo": "ts-node -r tsconfig-paths/register ./node_modules/sequelize-cli/lib/sequelize db:migrate:undo"
+    "db:migrate:undo": "ts-node -r tsconfig-paths/register ./node_modules/sequelize-cli/lib/sequelize db:migrate:undo",
+    "ingest": "tsx src/cli/ingest.ts"
   },
   "keywords": [],
   "author": "Stefan Falk",
