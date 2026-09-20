@@ -11,6 +11,8 @@ import { MemoryController } from './api/memory.controller.js';
 import { MemoryRelationsController } from './api/memory-relations.controller.js';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { McpController } from './api/mcp.controller.js';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { InstructionController } from './api/instruction.controller.js';
 import type { Request as ExRequest, Response as ExResponse, RequestHandler, Router } from 'express';
 
 
@@ -116,6 +118,31 @@ const models: TsoaRoute.Models = {
     "Record_string.unknown_": {
         "dataType": "refAlias",
         "type": {"dataType":"nestedObjectLiteral","nestedProperties":{},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "InstructionChunkResult": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"sourceUrl":{"dataType":"string","required":true},"text":{"dataType":"string","required":true},"headingPath":{"dataType":"array","array":{"dataType":"string"},"required":true},"title":{"dataType":"string","required":true},"docId":{"dataType":"double","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "InstructionDocSummary": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"sourceUrl":{"dataType":"string","required":true},"scope":{"dataType":"string","required":true},"owner":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"contextTags":{"dataType":"array","array":{"dataType":"string"},"required":true},"title":{"dataType":"string","required":true},"docId":{"dataType":"double","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ReadInstructionsResult": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"nestedObjectLiteral","nestedProperties":{"message":{"dataType":"string","required":true},"found":{"dataType":"enum","enums":[false],"required":true}}},{"dataType":"nestedObjectLiteral","nestedProperties":{"chunks":{"dataType":"array","array":{"dataType":"refAlias","ref":"InstructionChunkResult"},"required":true},"found":{"dataType":"enum","enums":[true],"required":true}}},{"dataType":"nestedObjectLiteral","nestedProperties":{"docs":{"dataType":"array","array":{"dataType":"refAlias","ref":"InstructionDocSummary"},"required":true},"found":{"dataType":"enum","enums":[true],"required":true}}}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "infer_typeofReadInstructionsSchema_": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"limit":{"dataType":"double"},"mode":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["full"]},{"dataType":"enum","enums":["short"]}]},"tags":{"dataType":"array","array":{"dataType":"string"}},"context":{"dataType":"string"}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ReadInstructionsQuery": {
+        "dataType": "refAlias",
+        "type": {"ref":"infer_typeofReadInstructionsSchema_","validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 };
@@ -426,6 +453,36 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'callMcp',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsInstructionController_readInstructions: Record<string, TsoaRoute.ParameterSchema> = {
+                query: {"in":"queries","name":"query","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"limit":{"dataType":"double"},"mode":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["full"]},{"dataType":"enum","enums":["short"]}]},"tags":{"dataType":"array","array":{"dataType":"string"}},"context":{"dataType":"string"}}},
+        };
+        app.get('/v1/instructions',
+            ...(fetchMiddlewares<RequestHandler>(InstructionController)),
+            ...(fetchMiddlewares<RequestHandler>(InstructionController.prototype.readInstructions)),
+
+            async function InstructionController_readInstructions(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsInstructionController_readInstructions, request, response });
+
+                const controller = new InstructionController();
+
+              await templateService.apiHandler({
+                methodName: 'readInstructions',
                 controller,
                 response,
                 next,

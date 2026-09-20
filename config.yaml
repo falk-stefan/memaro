@@ -56,6 +56,25 @@ tools:
     description: |
       Retrieve a memory by its ID.
 
+  read_instructions:
+    description: |
+      MANDATORY FIRST STEP before writing code, reviewing code, or acting in
+      a defined role (e.g. reviewer, PM). Retrieves the house rules and
+      conventions that apply — do not guess at conventions that were never
+      provided; call this instead.
+
+      Usage:
+      - read_instructions({ context: "how should I write code comments" })
+        for a free-text question — returns the most relevant instruction
+        content, ranked.
+      - read_instructions({ tags: ["coding", "react"] }) to pull everything
+        tagged with any of the given tags.
+      - Add { mode: "short" } to either form to get a short list of what
+        exists (title + tags) instead of full content, useful for deciding
+        what to pull in full next.
+
+      If nothing is found, proceed using your own judgment.
+
   remove_memory:
     description: |
       Delete duplicate or obsolete memories. 
