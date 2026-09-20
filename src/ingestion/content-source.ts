@@ -7,25 +7,25 @@
  */
 
 export type AclHint = {
-    visibility: 'public' | 'restricted';
+  visibility: 'public' | 'restricted';
 } | null;
 
 export type RawDoc = {
-    externalId: string;      // opaque outside the adapter — e.g. a relative file path
-    title: string;
-    content: string;         // normalized to plain text/markdown by the adapter
-    tags?: string[];          // adapter-derived tags (frontmatter + source config rules)
-    owner?: string;           // optional — not every source has this natively
-    scope?: 'org' | 'team' | 'repo';
-    lastModified?: Date;
-    sourceUrl: string;
-    contentHash: string;      // sha256 of the raw file content, used for change detection
-    acl: AclHint;
+  externalId: string; // opaque outside the adapter — e.g. a relative file path
+  title: string;
+  content: string; // normalized to plain text/markdown by the adapter
+  tags?: string[]; // adapter-derived tags (frontmatter + source config rules)
+  owner?: string; // optional — not every source has this natively
+  scope?: 'org' | 'team' | 'repo';
+  lastModified?: Date;
+  sourceUrl: string;
+  contentHash: string; // sha256 of the raw file content, used for change detection
+  acl: AclHint;
 };
 
 export interface ContentSource {
-    id: string;                                    // e.g. "local:agent-instructions"
-    listDocuments(): AsyncIterable<RawDoc>;
-    fetchDocument(externalId: string): Promise<RawDoc>;
-    supportsWebhook(): boolean;                     // else memaro polls / is manually re-scanned
+  id: string; // e.g. "local:agent-instructions"
+  listDocuments(): AsyncIterable<RawDoc>;
+  fetchDocument(externalId: string): Promise<RawDoc>;
+  supportsWebhook(): boolean; // else memaro polls / is manually re-scanned
 }
