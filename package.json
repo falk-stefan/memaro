@@ -13,7 +13,9 @@
     "db:migrate:undo": "ts-node -r tsconfig-paths/register ./node_modules/sequelize-cli/lib/sequelize db:migrate:undo",
     "ingest": "tsx src/cli/ingest.ts",
     "lint": "eslint src/",
-    "lint:fix": "eslint --fix src/"
+    "lint:fix": "eslint --fix src/",
+    "pretest": "tsoa spec-and-routes",
+    "test": "vitest run"
   },
   "keywords": [],
   "author": "Stefan Falk",
@@ -48,6 +50,7 @@
     "sequelize": "^6.37.8",
     "sequelize-cli": "^6.6.5",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.2",
+    "vitest": "^5.0.1"
   }
 }
