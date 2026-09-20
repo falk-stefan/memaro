@@ -3,14 +3,14 @@ import {TagEntity} from "../db/table/tag.entity.js";
 import {qdrantClient} from "../db/qdrant.js";
 import {withTransaction} from "../db/db.util.js";
 import {toTag} from "../dto/mapper/tag.mapper.js";
-import {embed} from "./embedding.service.js";
+import {embedDocument, embedQuery} from "./embedding.service.js";
 import {ApiError} from "../error.js";
 
 
 export class TagService {
 
   static async createTag  (create: CreateTag)  {
-    const embedding = await embed(create.description);
+    const embedding = await embedDocument(create.description);
 
     const tagEntity = await withTransaction(async (options) => {
       const created = await TagEntity.create(create, options);
@@ -23,7 +23,7 @@ export class TagService {
   static async   getTags (query: TagQuery)  {
     const {text, limit = 10} = query;
 
-    const embedding = await embed(text);
+    const embedding = await embedQuery(text);
 
     const qdrandResult = await qdrantClient.search('tag', {
       vector: embedding,

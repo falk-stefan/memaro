@@ -1,18 +1,54 @@
+import {randomUUID} from "node:crypto";
 import {readdir} from "node:fs/promises";
 import path from "node:path";
 import {sequelizeClient} from "../db/sequelize.js";
+import {qdrantClient} from "../db/qdrant.js";
 import {InstructionDocEntity} from "../db/table/instruction-doc.entity.js";
 import {LocalDirectorySource} from "../ingestion/local-directory.source.js";
 import {loadMemaroConfig} from "../ingestion/memaro-config.js";
+import {chunkDocument} from "../ingestion/chunking.js";
+import {embedDocument} from "../service/embedding.service.js";
 
 /**
  * Scans `data/<source-name>/` for every source directory, syncing each file
- * into `instruction_doc` via the local directory adapter. Content-hash based:
- * unchanged files are skipped, changed files are updated, removed files are
- * retired. Does not touch Qdrant — vector population is Iteration 3's job,
- * once embed() is swapped to the 768-dim model the `instruction` collection
- * is already sized for.
+ * into `instruction_doc` via the local directory adapter, and into vectors
+ * in the `instruction` Qdrant collection. Content-hash based: unchanged
+ * files are skipped entirely (no re-embedding), changed files have their
+ * chunks replaced, removed files have their row and chunks retired.
  */
+
+const deleteChunks = async (docId: string): Promise<void> => {
+    await qdrantClient.delete('instruction', {
+        wait: true,
+        filter: {must: [{key: 'docId', match: {value: Number(docId)}}]},
+    });
+};
+
+const indexChunks = async (doc: InstructionDocEntity): Promise<void> => {
+    const chunks = chunkDocument(doc.body);
+
+    if (chunks.length === 0) {
+        return;
+    }
+
+    const points = await Promise.all(chunks.map(async (chunk, index) => ({
+        id: randomUUID(),
+        vector: await embedDocument(chunk.embeddingText),
+        payload: {
+            docId: Number(doc.id),
+            chunkIndex: index,
+            headingPath: chunk.headingPath,
+            text: chunk.text,
+            title: doc.title,
+            contextTags: doc.contextTags,
+            scope: doc.scope,
+            owner: doc.owner,
+            sourceUrl: doc.sourceUrl,
+        },
+    })));
+
+    await qdrantClient.upsert('instruction', {wait: true, points});
+};
 
 const DATA_DIR = path.resolve(process.cwd(), process.env.MEMARO_DATA_DIR ?? 'data');
 const DEFAULT_SCOPE = 'org';
@@ -57,13 +93,14 @@ async function syncSource(sourceName: string): Promise<void> {
         };
 
         if (!existing) {
-            await InstructionDocEntity.create({
+            const createdDoc = await InstructionDocEntity.create({
                 ...shared,
                 lastReviewed: null,
                 sourceId: source.id,
                 sourcePath: doc.externalId,
                 acl: doc.acl,
             });
+            await indexChunks(createdDoc);
             created++;
             continue;
         }
@@ -74,6 +111,8 @@ async function syncSource(sourceName: string): Promise<void> {
         }
 
         await existing.update(shared);
+        await deleteChunks(existing.id);
+        await indexChunks(existing);
         updated++;
     }
 
@@ -81,6 +120,7 @@ async function syncSource(sourceName: string): Promise<void> {
     let removed = 0;
     for (const row of existingRows) {
         if (!seenPaths.has(row.sourcePath)) {
+            await deleteChunks(row.id);
             await row.destroy();
             removed++;
         }

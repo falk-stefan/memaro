@@ -2,35 +2,36 @@ import {QdrantClient} from '@qdrant/js-client-rest';
 
 export const qdrantClient = new QdrantClient({url: process.env.QDRANT_URL ?? 'http://127.0.0.1:6333'});
 
-const {collections} = await qdrantClient.getCollections();
+// Milestone 1, Iteration 3 swapped embed() to nomic-embed-text-v1.5
+// (768 dims), replacing all-MiniLM-L6-v2 (384 dims). `memory`/`tag` are
+// recreated at 768 dims here rather than left at 384 — safe only because
+// neither held real data yet (see Iteration 2's deferral note); doing this
+// after Milestone 4 exists would mean re-embedding live memories instead.
+const VECTOR_SIZE = 768;
 
-const hasMemories = !!collections.find((collection) => collection.name === "memory");
+const ensureCollection = async (name: string): Promise<void> => {
+    const {collections} = await qdrantClient.getCollections();
+    const existing = collections.find((collection) => collection.name === name);
 
-const hasTags = !!collections.find((collection) => collection.name === "tag");
+    if (existing) {
+        const info = await qdrantClient.getCollection(name);
+        const vectors = info.config.params.vectors;
+        const currentSize = typeof vectors === 'object' && vectors !== null && 'size' in vectors
+            ? (vectors as { size: number }).size
+            : undefined;
 
-// instruction_doc's own collection (Milestone 1, Iteration 2) — kept separate
-// from `memory` so resource types never cross-contaminate search results.
-// Sized for nomic-embed-text-v1.5 (768 dims), the model Iteration 3 swaps
-// embed() to. `memory`/`tag` stay at 384 dims until that swap lands — bumping
-// their dimension ahead of the model that produces it would break the
-// currently-working memory/tag tools for no benefit, since this collection
-// isn't written to until Iteration 3's ingestion pipeline exists.
-const hasInstructions = !!collections.find((collection) => collection.name === "instruction");
+        if (currentSize === VECTOR_SIZE) {
+            return;
+        }
 
-if (!hasMemories) {
-    await qdrantClient.createCollection('memory', {
-        vectors: {size: 384, distance: 'Cosine'},
+        await qdrantClient.deleteCollection(name);
+    }
+
+    await qdrantClient.createCollection(name, {
+        vectors: {size: VECTOR_SIZE, distance: 'Cosine'},
     });
-}
+};
 
-if (!hasTags) {
-    await qdrantClient.createCollection('tag', {
-        vectors: {size: 384, distance: 'Cosine'},
-    });
-}
-
-if (!hasInstructions) {
-    await qdrantClient.createCollection('instruction', {
-        vectors: {size: 768, distance: 'Cosine'},
-    });
-}
+await ensureCollection('memory');
+await ensureCollection('tag');
+await ensureCollection('instruction');

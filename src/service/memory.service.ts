@@ -1,5 +1,5 @@
 import {CreateMemory, Memory, MemoryQuery, UpdateMemory} from "../dto/memory.dto.js";
-import {embed} from "./embedding.service.js";
+import {embedDocument, embedQuery} from "./embedding.service.js";
 import {qdrantClient} from "../db/qdrant.js";
 import {MemoryEntity} from "../db/table/memory.entity.js";
 import {NotFoundError} from "../error.js";
@@ -20,7 +20,7 @@ export class MemoryService {
 
     const tags = await findTagsElseThrow(create.tags);
 
-    const embedding = await embed(create.text);
+    const embedding = await embedDocument(create.text);
 
     const memoryEntity = await withTransaction(async (options) => {
 
@@ -44,7 +44,7 @@ export class MemoryService {
     }
 
     if (sanitized.text) {
-      const embedding = await embed(sanitized.text);
+      const embedding = await embedDocument(sanitized.text);
       await upsertMemory({memoryEntity, embedding, payload: sanitized});
     }
 
@@ -67,7 +67,7 @@ export class MemoryService {
   static async getMemories(query: MemoryQuery) {
     const {text, type, limit = 10} = query;
 
-    const embedding = await embed(text);
+    const embedding = await embedQuery(text);
 
     const must = type ? [{key: 'type', match: {value: type}}] : [];
 
