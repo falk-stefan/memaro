@@ -71,6 +71,18 @@ const fuseRankings = (rankings: ScoredPoint[][]): ScoredPoint[] => {
   return [...scores.entries()].sort((a, b) => b[1] - a[1]).map(([key]) => byId.get(key)!);
 };
 
+// `Model.findAll({ where: { id: [...] } })` returns rows in table order, not
+// the order of the id array — a fused rank is meaningless unless something
+// re-sorts the query result back into it explicitly.
+export const reorderByFusedRank = <T>(
+  items: T[],
+  orderedIds: number[],
+  getId: (item: T) => number,
+): T[] => {
+  const byId = new Map(items.map((item) => [getId(item), item]));
+  return orderedIds.map((id) => byId.get(id)).filter((item): item is T => item !== undefined);
+};
+
 const packChunks = (points: ScoredPoint[]): InstructionChunkResult[] => {
   const chunks: InstructionChunkResult[] = [];
   let usedChars = 0;
@@ -139,16 +151,14 @@ export class InstructionService {
     }
 
     if (mode === 'short') {
-      const docs = await InstructionDocEntity.findAll({
-        where: {
-          id: [
-            ...new Set(
-              fused.map((point) => (point.payload as unknown as InstructionChunkPayload).docId),
-            ),
-          ],
-        },
-      });
-      return { found: true, docs: docs.map(toDocSummary) };
+      const orderedDocIds = [
+        ...new Set(
+          fused.map((point) => (point.payload as unknown as InstructionChunkPayload).docId),
+        ),
+      ];
+      const docs = await InstructionDocEntity.findAll({ where: { id: orderedDocIds } });
+      const ordered = reorderByFusedRank(docs, orderedDocIds, (doc) => Number(doc.id));
+      return { found: true, docs: ordered.map(toDocSummary) };
     }
 
     return { found: true, chunks: packChunks(fused) };
