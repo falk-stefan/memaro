@@ -142,7 +142,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "ReadInstructionsResult": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"nestedObjectLiteral","nestedProperties":{"message":{"dataType":"string","required":true},"found":{"dataType":"enum","enums":[false],"required":true}}},{"dataType":"nestedObjectLiteral","nestedProperties":{"chunks":{"dataType":"array","array":{"dataType":"refAlias","ref":"InstructionChunkResult"},"required":true},"found":{"dataType":"enum","enums":[true],"required":true}}},{"dataType":"nestedObjectLiteral","nestedProperties":{"docs":{"dataType":"array","array":{"dataType":"refAlias","ref":"InstructionDocSummary"},"required":true},"found":{"dataType":"enum","enums":[true],"required":true}}}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"nestedObjectLiteral","nestedProperties":{"message":{"dataType":"string","required":true},"found":{"dataType":"enum","enums":[false],"required":true}}},{"dataType":"nestedObjectLiteral","nestedProperties":{"chunks":{"dataType":"array","array":{"dataType":"refAlias","ref":"InstructionChunkResult"},"required":true},"found":{"dataType":"enum","enums":[true],"required":true}}},{"dataType":"nestedObjectLiteral","nestedProperties":{"message":{"dataType":"string"},"truncated":{"dataType":"enum","enums":[true]},"docs":{"dataType":"array","array":{"dataType":"refAlias","ref":"InstructionDocSummary"},"required":true},"found":{"dataType":"enum","enums":[true],"required":true}}}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "infer_typeofReadInstructionsSchema_": {
@@ -153,6 +153,11 @@ const models: TsoaRoute.Models = {
     "ReadInstructionsQuery": {
         "dataType": "refAlias",
         "type": {"ref":"infer_typeofReadInstructionsSchema_","validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "InstructionDocFull": {
+        "dataType": "refAlias",
+        "type": {"dataType":"intersection","subSchemas":[{"ref":"InstructionDocSummary"},{"dataType":"nestedObjectLiteral","nestedProperties":{"lastReviewed":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"body":{"dataType":"string","required":true}}}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 };
@@ -493,6 +498,36 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'readInstructions',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsInstructionController_getInstruction: Record<string, TsoaRoute.ParameterSchema> = {
+                docId: {"in":"path","name":"docId","required":true,"dataType":"double"},
+        };
+        app.get('/v1/instructions/:docId',
+            ...(fetchMiddlewares<RequestHandler>(InstructionController)),
+            ...(fetchMiddlewares<RequestHandler>(InstructionController.prototype.getInstruction)),
+
+            async function InstructionController_getInstruction(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsInstructionController_getInstruction, request, response });
+
+                const controller = new InstructionController();
+
+              await templateService.apiHandler({
+                methodName: 'getInstruction',
                 controller,
                 response,
                 next,

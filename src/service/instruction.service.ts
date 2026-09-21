@@ -4,9 +4,11 @@ import { InstructionDocEntity } from '../db/table/instruction-doc.entity.js';
 import { embedQuery } from './embedding.service.js';
 import { sparseVector } from '../ingestion/sparse.js';
 import { TOTAL_RESPONSE_TOKEN_CAP } from '../ingestion/limits.js';
-import { ApiError } from '../error.js';
+import { ApiError, NotFoundError } from '../error.js';
 import {
+  GetInstructionQuery,
   InstructionChunkResult,
+  InstructionDocFull,
   InstructionDocSummary,
   ReadInstructionsQuery,
   ReadInstructionsResult,
@@ -51,6 +53,12 @@ const toDocSummary = (doc: InstructionDocEntity): InstructionDocSummary => ({
   sourceUrl: doc.sourceUrl,
 });
 
+const toDocFull = (doc: InstructionDocEntity): InstructionDocFull => ({
+  ...toDocSummary(doc),
+  body: doc.body,
+  lastReviewed: doc.lastReviewed ? new Date(doc.lastReviewed).toISOString().slice(0, 10) : null,
+});
+
 // Reciprocal rank fusion: a point's fused score is the sum, across every
 // ranking it appears in, of 1/(k + rank). This combines the dense and
 // sparse result lists without needing their raw scores to be on a
@@ -83,7 +91,14 @@ export const reorderByFusedRank = <T>(
   return orderedIds.map((id) => byId.get(id)).filter((item): item is T => item !== undefined);
 };
 
-const packChunks = (points: ScoredPoint[]): InstructionChunkResult[] => {
+const fetchDocsInOrder = async (orderedDocIds: number[]): Promise<InstructionDocEntity[]> => {
+  const docs = await InstructionDocEntity.findAll({ where: { id: orderedDocIds } });
+  return reorderByFusedRank(docs, orderedDocIds, (doc) => Number(doc.id));
+};
+
+type PackResult<T> = { items: T[]; truncated: boolean };
+
+const packChunks = (points: ScoredPoint[]): PackResult<InstructionChunkResult> => {
   const chunks: InstructionChunkResult[] = [];
   let usedChars = 0;
 
@@ -91,7 +106,7 @@ const packChunks = (points: ScoredPoint[]): InstructionChunkResult[] => {
     const payload = point.payload as unknown as InstructionChunkPayload;
 
     if (usedChars + payload.text.length > TOTAL_RESPONSE_CHAR_CAP && chunks.length > 0) {
-      break;
+      return { items: chunks, truncated: true };
     }
 
     chunks.push({
@@ -104,8 +119,46 @@ const packChunks = (points: ScoredPoint[]): InstructionChunkResult[] => {
     usedChars += payload.text.length;
   }
 
-  return chunks;
+  return { items: chunks, truncated: false };
 };
+
+const packBodies = (docs: InstructionDocEntity[]): PackResult<InstructionChunkResult> => {
+  const chunks: InstructionChunkResult[] = [];
+  let usedChars = 0;
+
+  for (const doc of docs) {
+    if (usedChars + doc.body.length > TOTAL_RESPONSE_CHAR_CAP && chunks.length > 0) {
+      return { items: chunks, truncated: true };
+    }
+    chunks.push({
+      docId: Number(doc.id),
+      title: doc.title,
+      headingPath: [],
+      text: doc.body,
+      sourceUrl: doc.sourceUrl,
+    });
+    usedChars += doc.body.length;
+  }
+
+  return { items: chunks, truncated: false };
+};
+
+// The shared "full didn't fit" fallback: rather than a silently partial
+// chunk/body list, return every matching doc's summary (uncapped by
+// `limit`, which only bounds how much *full* content we attempt) plus a
+// message pointing at getInstruction for full content on a specific one.
+const truncatedShortResult = (
+  allDocs: InstructionDocEntity[],
+  matchCountLabel: string,
+): ReadInstructionsResult => ({
+  found: true,
+  docs: allDocs.map(toDocSummary),
+  truncated: true,
+  message:
+    `${allDocs.length} documents matched ${matchCountLabel} but full content exceeds the ` +
+    `response budget — showing summaries instead. Call get_instruction({ docId }) for a ` +
+    `specific one's full content.`,
+});
 
 export class InstructionService {
   static async readInstructions(query: ReadInstructionsQuery): Promise<ReadInstructionsResult> {
@@ -141,7 +194,7 @@ export class InstructionService {
       }),
     ]);
 
-    const fused = fuseRankings([denseResults, sparseResults]).slice(0, limit);
+    const fused = fuseRankings([denseResults, sparseResults]);
 
     if (fused.length === 0) {
       return {
@@ -150,18 +203,22 @@ export class InstructionService {
       };
     }
 
+    const orderedDocIds = [
+      ...new Set(fused.map((point) => (point.payload as unknown as InstructionChunkPayload).docId)),
+    ];
+
     if (mode === 'short') {
-      const orderedDocIds = [
-        ...new Set(
-          fused.map((point) => (point.payload as unknown as InstructionChunkPayload).docId),
-        ),
-      ];
-      const docs = await InstructionDocEntity.findAll({ where: { id: orderedDocIds } });
-      const ordered = reorderByFusedRank(docs, orderedDocIds, (doc) => Number(doc.id));
-      return { found: true, docs: ordered.map(toDocSummary) };
+      const docs = await fetchDocsInOrder(orderedDocIds.slice(0, limit));
+      return { found: true, docs: docs.map(toDocSummary) };
     }
 
-    return { found: true, chunks: packChunks(fused) };
+    const { items, truncated } = packChunks(fused.slice(0, limit));
+    if (!truncated && orderedDocIds.length <= limit) {
+      return { found: true, chunks: items };
+    }
+
+    const allDocs = await fetchDocsInOrder(orderedDocIds);
+    return truncatedShortResult(allDocs, 'this context');
   }
 
   private static async readByTagsOnly(
@@ -169,13 +226,16 @@ export class InstructionService {
     mode: 'full' | 'short',
     limit: number,
   ): Promise<ReadInstructionsResult> {
-    const docs = await InstructionDocEntity.findAll({
+    // Unlimited: with no relevance ranking to cut against, we need to know
+    // the true match count to decide whether `full` fits or must fall back
+    // (see truncatedShortResult) — a DB-level limit here would silently
+    // hide matches before that decision could even be made.
+    const allDocs = await InstructionDocEntity.findAll({
       where: { contextTags: { [Op.overlap]: tags } },
       order: [['title', 'ASC']],
-      limit,
     });
 
-    if (docs.length === 0) {
+    if (allDocs.length === 0) {
       return {
         found: false,
         message: 'No instructions found for these tags — proceed with judgment.',
@@ -183,26 +243,22 @@ export class InstructionService {
     }
 
     if (mode === 'short') {
-      return { found: true, docs: docs.map(toDocSummary) };
+      return { found: true, docs: allDocs.slice(0, limit).map(toDocSummary) };
     }
 
-    const chunks: InstructionChunkResult[] = [];
-    let usedChars = 0;
-
-    for (const doc of docs) {
-      if (usedChars + doc.body.length > TOTAL_RESPONSE_CHAR_CAP && chunks.length > 0) {
-        break;
-      }
-      chunks.push({
-        docId: Number(doc.id),
-        title: doc.title,
-        headingPath: [],
-        text: doc.body,
-        sourceUrl: doc.sourceUrl,
-      });
-      usedChars += doc.body.length;
+    const { items, truncated } = packBodies(allDocs.slice(0, limit));
+    if (!truncated && allDocs.length <= limit) {
+      return { found: true, chunks: items };
     }
 
-    return { found: true, chunks };
+    return truncatedShortResult(allDocs, `tags [${tags.join(', ')}]`);
+  }
+
+  static async getInstruction(query: GetInstructionQuery): Promise<InstructionDocFull> {
+    const doc = await InstructionDocEntity.findByPk(query.docId);
+    if (!doc) {
+      throw new NotFoundError(`instruction doc: ${query.docId}`);
+    }
+    return toDocFull(doc);
   }
 }

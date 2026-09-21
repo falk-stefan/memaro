@@ -72,8 +72,18 @@ tools:
       - Add { mode: "short" } to either form to get a short list of what
         exists (title + tags) instead of full content, useful for deciding
         what to pull in full next.
+      - If a match is too large to return in full, you'll get a short list
+        of everything that matched instead (never a silently partial one) —
+        call get_instruction on the doc you actually need.
 
       If nothing is found, proceed using your own judgment.
+
+  get_instruction:
+    description: |
+      Fetch one instruction document's full body by its docId (from a
+      read_instructions result). Use this after read_instructions in
+      "short" mode, or after a "too large" response, to pull one specific
+      document in full.
 
   remove_memory:
     description: |

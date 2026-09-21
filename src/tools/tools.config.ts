@@ -16,6 +16,7 @@ const ToolsSchema = z.object({
   add_tag: ToolConfigSchema,
   search_tags: ToolConfigSchema,
   read_instructions: ToolConfigSchema,
+  get_instruction: ToolConfigSchema,
 });
 
 const MemoryTypeSchema = z.object({

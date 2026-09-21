@@ -9,12 +9,14 @@ import { TOOLS } from './tools/tools.service.js';
 // moment either surface gains a mutating instruction route, rather than
 // relying on someone remembering to check during review.
 describe('instruction_doc is read-only from every agent-facing surface', () => {
-  it('exposes exactly one instruction-related MCP tool: read_instructions', () => {
-    const instructionTools = TOOLS.filter((tool) => tool.name.includes('instruction')).map(
-      (tool) => tool.name,
-    );
+  it('exposes only read-only instruction-related MCP tools', () => {
+    const instructionTools = TOOLS.filter((tool) => tool.name.includes('instruction'))
+      .map((tool) => tool.name)
+      .sort();
 
-    expect(instructionTools).toEqual(['read_instructions']);
+    // get_instruction (fetch by id) is as read-only as read_instructions
+    // (search) — both only ever read instruction_doc, neither writes to it.
+    expect(instructionTools).toEqual(['get_instruction', 'read_instructions']);
   });
 
   it('registers no mutating REST route under /v1/instructions', () => {

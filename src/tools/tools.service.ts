@@ -1,6 +1,7 @@
 import {
   CreateMemorySchema,
   CreateTagSchema,
+  GetInstructionSchema,
   GetMemoriesSchema,
   GetMemorySchema,
   GetTagsSchema,
@@ -27,7 +28,8 @@ type Tool<T extends ZodObject<any>> = {
     | 'link_memory'
     | 'add_tag'
     | 'search_tags'
-    | 'read_instructions';
+    | 'read_instructions'
+    | 'get_instruction';
   description: string;
   inputSchema: T;
   handler: (input: never) => Promise<unknown>;
@@ -102,6 +104,12 @@ export const TOOLS: Tool<ZodObject<any>>[] = [
     description: toolsConfig.read_instructions.description,
     inputSchema: ReadInstructionsSchema,
     handler: InstructionService.readInstructions,
+  },
+  {
+    name: 'get_instruction',
+    description: toolsConfig.get_instruction.description,
+    inputSchema: GetInstructionSchema,
+    handler: InstructionService.getInstruction,
   },
 ];
 

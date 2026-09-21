@@ -107,3 +107,14 @@ export const ReadInstructionsSchema = z.object({
   mode: z.enum(['full', 'short']).optional(),
   limit: z.number().int().max(10).positive().optional(),
 });
+
+/**
+ * Get Instruction
+ *
+ * Fetches one instruction doc's full body by id — the counterpart to
+ * `read_instructions`'s `mode: "short"` results, which name a `docId` but
+ * (before this) had nothing that accepted it.
+ */
+export const GetInstructionSchema = z.object({
+  docId: z.number().int().positive(),
+});
