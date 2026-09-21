@@ -15,6 +15,7 @@ import { MemoryService } from '../service/memory.service.js';
 import { MemoryRelationsService } from '../service/memory-relations.service.js';
 import { TagService } from '../service/tag.service.js';
 import { InstructionService } from '../service/instruction.service.js';
+import { NotFoundError } from '../error.js';
 
 type Tool<T extends ZodObject<any>> = {
   name:
@@ -104,6 +105,19 @@ export const TOOLS: Tool<ZodObject<any>>[] = [
   },
 ];
 
+// The MCP `tools/call` response shape (a `content` block array), used
+// identically by the stdio transport (src/index.ts) and the HTTP JSON-RPC
+// transport (McpController) so the two never drift apart.
+const toCallToolResult = (result: unknown) => ({
+  content: [
+    {
+      type: 'text' as const,
+      text: JSON.stringify(result),
+      annotations: { audience: ['assistant' as const] },
+    },
+  ],
+});
+
 export class ToolService {
   static async getTools() {
     return TOOLS.map((tool) => ({
@@ -111,5 +125,14 @@ export class ToolService {
       description: tool.description,
       inputSchema: stripSchema(tool.inputSchema),
     }));
+  }
+
+  static async callTool(name: string, args: unknown) {
+    const tool = TOOLS.find((candidate) => candidate.name === name);
+    if (!tool) {
+      throw new NotFoundError(`tool: ${name}`);
+    }
+    const result = await tool.handler(args as never);
+    return toCallToolResult(result);
   }
 }

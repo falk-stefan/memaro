@@ -1,5 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { TOOLS } from './tools/tools.service.js';
+import { TOOLS, ToolService } from './tools/tools.service.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { sequelizeClient } from './db/sequelize.js';
 import express, { json, urlencoded } from 'express';
@@ -68,21 +68,7 @@ function createMcpServer() {
         description: tool.description,
         inputSchema: tool.inputSchema,
       },
-      async (input) => {
-        console.error('input', input);
-        const result = await tool.handler(input as never);
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(result),
-              annotations: {
-                audience: ['assistant'],
-              },
-            },
-          ],
-        };
-      },
+      async (input) => ToolService.callTool(tool.name, input),
     );
   }
 

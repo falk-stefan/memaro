@@ -120,6 +120,16 @@ const models: TsoaRoute.Models = {
         "type": {"dataType":"nestedObjectLiteral","nestedProperties":{},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "JsonRpcId": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"double"}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "JsonRpcRequest": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"params":{"dataType":"any"},"method":{"dataType":"string","required":true},"id":{"ref":"JsonRpcId"},"jsonrpc":{"dataType":"string","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "InstructionChunkResult": {
         "dataType": "refAlias",
         "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"sourceUrl":{"dataType":"string","required":true},"text":{"dataType":"string","required":true},"headingPath":{"dataType":"array","array":{"dataType":"string"},"required":true},"title":{"dataType":"string","required":true},"docId":{"dataType":"double","required":true}},"validators":{}},
@@ -435,7 +445,7 @@ export function RegisterRoutes(app: Router) {
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsMcpController_callMcp: Record<string, TsoaRoute.ParameterSchema> = {
-                body: {"in":"body","name":"body","required":true,"ref":"Record_string.unknown_"},
+                body: {"in":"body","name":"body","required":true,"ref":"JsonRpcRequest"},
         };
         app.post('/mcp',
             ...(fetchMiddlewares<RequestHandler>(McpController)),
