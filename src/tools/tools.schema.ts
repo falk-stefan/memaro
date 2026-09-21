@@ -42,7 +42,7 @@ export const GetMemorySchema = z.object({
  */
 export const GetMemoriesSchema = z.object({
   text: z.string().min(1).nonempty(),
-  type: MemoryRelationTypeListSchema.optional(),
+  type: MemoryTypeListSchema.optional(),
   limit: z.number().int().max(10).positive().optional(),
 });
 
