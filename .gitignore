@@ -19,6 +19,7 @@ qdrant_data
 # the directory itself is tracked as the docker-compose bind mount target,
 # its contents are not.
 data/*
+!data/todo-app
 !data/.gitkeep
 
 # Misc.
