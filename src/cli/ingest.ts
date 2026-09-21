@@ -94,6 +94,7 @@ async function syncSource(sourceName: string): Promise<void> {
       contextTags: doc.tags ?? [],
       scope: doc.scope ?? config.scope ?? DEFAULT_SCOPE,
       owner: doc.owner ?? null,
+      lastReviewed: doc.lastReviewed ?? null,
       sourceUrl: doc.sourceUrl,
       contentHash: doc.contentHash,
     };
@@ -101,7 +102,6 @@ async function syncSource(sourceName: string): Promise<void> {
     if (!existing) {
       const createdDoc = await InstructionDocEntity.create({
         ...shared,
-        lastReviewed: null,
         sourceId: source.id,
         sourcePath: doc.externalId,
         acl: doc.acl,

@@ -57,12 +57,26 @@ export class LocalDirectorySource implements ContentSource {
       tags,
       owner: typeof data.owner === 'string' ? data.owner : config.owner,
       scope: (typeof data.scope === 'string' ? data.scope : config.scope) as RawDoc['scope'],
+      lastReviewed: parseLastReviewed(data.lastReviewed),
       lastModified: fileStat.mtime,
       sourceUrl: `file://${absPath}`,
       contentHash: createHash('sha256').update(raw).digest('hex'),
       acl: null,
     };
   }
+}
+
+// YAML parses an unquoted date like `2026-08-01` as a Date already; a
+// quoted string needs an explicit parse. Anything else is absent.
+function parseLastReviewed(value: unknown): Date | undefined {
+  if (value instanceof Date) {
+    return value;
+  }
+  if (typeof value === 'string') {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+  }
+  return undefined;
 }
 
 async function* walkMarkdownFiles(rootDir: string, relDir = ''): AsyncGenerator<string> {

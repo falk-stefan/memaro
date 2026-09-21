@@ -17,6 +17,7 @@ export type RawDoc = {
   tags?: string[]; // adapter-derived tags (frontmatter + source config rules)
   owner?: string; // optional — not every source has this natively
   scope?: 'org' | 'team' | 'repo';
+  lastReviewed?: Date; // human-asserted "still accurate as of" date, from frontmatter
   lastModified?: Date;
   sourceUrl: string;
   contentHash: string; // sha256 of the raw file content, used for change detection
