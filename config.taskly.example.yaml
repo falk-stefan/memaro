@@ -1,0 +1,125 @@
+#
+# Example deployment config for a fictional company, "Taskly" (a todo-app
+# team), pairing with the dogfood instructions dataset at data/todo-app/.
+#
+# This is what an actual product team's memaro deployment would look like —
+# in contrast to config.yaml (this repo's own, used while building memaro
+# itself). Try it with:
+#
+#   MEMARO_CONFIG=./config.taskly.example.yaml pnpm dev
+#
+# The story this config tells: `read_instructions` is the formal, curated,
+# human-owned ground truth (coding style, conventions, architecture
+# decisions — see data/todo-app/). `search_memories`/`add_memory` are for
+# provisional, session-level knowledge an agent picks up while working that
+# hasn't been (and may never be) promoted into a written doc — a workaround
+# discovered mid-task, a decision the team hasn't formalized yet. Memory
+# should shrink over time as good entries graduate into real instruction
+# docs; it's not a second, competing source of truth.
+#
+
+tools:
+
+  read_instructions:
+    description: |
+      MANDATORY FIRST STEP before writing code, reviewing code, or acting in
+      a defined role (e.g. reviewer, PM). Retrieves Taskly's house rules,
+      conventions, and product/architecture decisions — do not guess at
+      conventions or domain rules that were never provided; call this
+      instead.
+
+      Usage:
+      - read_instructions({ context: "how does task recurrence work" }) for
+        a free-text question — returns the most relevant content, ranked.
+      - read_instructions({ tags: ["backend", "coding-style"] }) to pull
+        everything tagged with any of the given tags.
+      - Add { mode: "short" } to either form to get a short list of what
+        exists (title + tags) instead of full content, useful for deciding
+        what to pull in full next.
+
+      If nothing is found, proceed using your own judgment — but check
+      search_memories first for anything relevant that hasn't been written
+      up as a formal doc yet.
+
+  search_memories:
+    description: |
+      MANDATORY SECOND STEP (after read_instructions) for any nontrivial
+      task. Searches provisional knowledge from past sessions that hasn't
+      been formalized into a read_instructions doc — workarounds, decisions
+      still being validated, gotchas discovered while working in this
+      codebase.
+
+      If read_instructions and search_memories both come up empty, proceed
+      using your own judgment and consider recording what you learn with
+      add_memory.
+
+  get_memory:
+    description: |
+      Retrieve a specific memory by its ID — e.g. to follow a link_memory
+      relation to the memory it points at.
+
+  add_memory:
+    description: |
+      Record provisional knowledge after a session, so the next agent
+      session doesn't rediscover it from scratch.
+
+      PRIORITY:
+      - a gotcha or pitfall you hit and how you resolved it
+      - a decision made during this session that isn't written up anywhere
+        yet (flag it for promotion to a real doc under data/todo-app/ once
+        it's stable)
+
+      AVOID:
+      - anything already covered by read_instructions — update the source
+        doc instead of duplicating it here
+      - low-level implementation details that don't generalize beyond this
+        one task
+
+  update_memory:
+    description: |
+      Update a memory when the underlying situation changes — a workaround
+      stopped being necessary, a tentative decision was reversed. Prefer
+      updating over creating a duplicate entry for the same thing.
+
+  remove_memory:
+    description: |
+      Remove a memory once it's stale: superseded by a real doc under
+      data/todo-app/, no longer true, or made irrelevant by a code change.
+      Prefer updating over removing when the underlying topic still matters.
+
+  link_memory:
+    description: |
+      Link two memories when one explains or was caused by the other — e.g.
+      a gotcha (rationale) that explains why a particular workaround
+      (product) exists.
+
+  search_tags:
+    description: |
+      Search existing tags before creating a new one — reuse
+      `backend`/`frontend`/`sync`/`recurrence`-style tags that already match
+      data/todo-app/'s context tags where possible, so memory and
+      instructions stay cross-referenceable.
+
+  add_tag:
+    description: |
+      Only create a new tag if no existing one fits. Prefer short,
+      domain-specific tags (e.g. "sync", "recurrence", "collaboration") over
+      generic ones.
+
+resources:
+  memory:
+    types:
+      product:
+        description: |
+          - What currently happens in the running app (a behavior, a
+            workaround, a state) — not why it was decided that way
+          - Session-level and provisional; promote to a data/todo-app/ doc
+            once it's stable and worth everyone relying on it
+
+      rationale:
+        description: |
+          - Why something was done a particular way, when that reasoning
+            isn't captured in a real decision doc yet
+          - Include what was tried and rejected, not just the final call
+
+    relations: ['explains']
