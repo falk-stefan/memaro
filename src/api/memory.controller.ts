@@ -27,6 +27,6 @@ export class MemoryController {
 
   @Delete('/{id}')
   public async deleteMemory(@Path() id: string, @Request() request: ExpressRequest) {
-    await MemoryService.deleteMemory(id, requireIdentity(request));
+    await MemoryService.deleteMemory({ id }, requireIdentity(request));
   }
 }

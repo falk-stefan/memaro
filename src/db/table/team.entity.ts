@@ -2,17 +2,21 @@ import { BelongsTo, Column, DataType, HasMany, Model, Table } from 'sequelize-ty
 import { OrgEntity } from './org.entity.js';
 import { TeamMemberEntity } from './team-member.entity.js';
 
+export type ConsolidationMode = 'shadow' | 'live';
+
 type TeamAttributes = {
   id: string;
   createdAt: Date;
   updatedAt: Date;
   orgId: string;
   name: string;
+  consolidationMode: ConsolidationMode;
 };
 
 type CreateTeamAttributes = {
   orgId: string;
   name: string;
+  consolidationMode: ConsolidationMode;
 };
 
 @Table({ tableName: 'team' })
@@ -31,6 +35,9 @@ export class TeamEntity extends Model<TeamAttributes, CreateTeamAttributes> {
 
   @Column({ type: DataType.TEXT })
   declare name: string;
+
+  @Column({ type: DataType.STRING(16) })
+  declare consolidationMode: ConsolidationMode;
 
   @BelongsTo(() => OrgEntity, { foreignKey: 'orgId' })
   declare org: OrgEntity;

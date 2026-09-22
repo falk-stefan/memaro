@@ -11,6 +11,7 @@ import { verifyTypeElseThrow } from '../validation/verify.js';
 import { findTagsElseThrow } from './tag.service.js';
 import { MemoriesView } from '../db/view/memory.view.js';
 import type { Identity } from '../auth.js';
+import { requireOwnMemory } from '../authorize.js';
 
 export class MemoryService {
   static async createMemory(create: CreateMemory, identity: Identity): Promise<Memory> {
@@ -39,8 +40,6 @@ export class MemoryService {
     return toMemory(memoryEntity);
   }
 
-  // `identity` isn't used for scoping/filtering yet (#8 is plumbing only —
-  // that's Milestone 3/#6) but every call site now has it available.
   static async updateMemory({ id, values }: UpdateValues<UpdateMemory>, identity: Identity) {
     const sanitized = removeUndefinedAndValidate(values);
 
@@ -48,6 +47,7 @@ export class MemoryService {
     if (!memoryEntity) {
       throw new NotFoundError('memory');
     }
+    requireOwnMemory(identity, memoryEntity.userId);
 
     if (sanitized.text) {
       const embedding = await embedDocument(sanitized.text);
@@ -61,11 +61,15 @@ export class MemoryService {
     await memoryEntity.update(sanitized);
   }
 
-  static async getMemory(id: string, identity: Identity): Promise<Memory> {
+  // Takes `{ id }` (matching GetMemorySchema), not a bare id — this is a
+  // direct `tool.handler` reference (see tools.service.ts), invoked with
+  // the whole parsed args object.
+  static async getMemory({ id }: { id: string }, identity: Identity): Promise<Memory> {
     const memoryEntity = await MemoryEntity.findOne({ where: { id } });
     if (!memoryEntity) {
       throw new NotFoundError('memory');
     }
+    requireOwnMemory(identity, memoryEntity.userId);
     return toMemory(memoryEntity);
   }
 
@@ -74,7 +78,10 @@ export class MemoryService {
 
     const embedding = await embedQuery(text);
 
-    const must = type ? [{ key: 'type', match: { value: type } }] : [];
+    const must = [
+      { key: 'userId', match: { value: identity.userId } },
+      ...(type ? [{ key: 'type', match: { value: type } }] : []),
+    ];
 
     const qdrantResult = await qdrantClient.search('memory', {
       vector: embedding,
@@ -84,16 +91,20 @@ export class MemoryService {
     });
 
     const ids = qdrantResult.map((r) => r.id);
-    const memories = await MemoryEntity.findAll(MemoriesView({ ids }));
+    const memories = await MemoryEntity.findAll(MemoriesView({ ids, userId: identity.userId }));
 
     return toMemorySearchResult(memories, qdrantResult);
   }
 
-  static async deleteMemory(id: string, identity: Identity) {
+  // Takes `{ id }` (matching DeleteMemorySchema), not a bare id — this is
+  // a direct `tool.handler` reference (see tools.service.ts), invoked with
+  // the whole parsed args object.
+  static async deleteMemory({ id }: { id: string }, identity: Identity) {
     const memoryEntity = await MemoryEntity.findOne({ where: { id } });
     if (!memoryEntity) {
       throw new NotFoundError('memory');
     }
+    requireOwnMemory(identity, memoryEntity.userId);
 
     await qdrantClient.delete('memory', {
       wait: true,

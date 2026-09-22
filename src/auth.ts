@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import type { NextFunction, Request, Response } from 'express';
 import { ApiKeyEntity } from './db/table/api-key.entity.js';
-import { UserEntity } from './db/table/user.entity.js';
+import { UserEntity, type UserRole } from './db/table/user.entity.js';
 import { TeamMemberEntity } from './db/table/team-member.entity.js';
 import { UnauthorizedError } from './error.js';
 
@@ -14,6 +14,7 @@ export type Identity = {
   teamIds: string[];
   email: string;
   isServiceAccount: boolean;
+  role: UserRole;
 };
 
 declare global {
@@ -73,6 +74,7 @@ export async function resolveApiKey(rawKey: string): Promise<Identity | null> {
     teamIds: memberships.map((membership) => membership.teamId),
     email: user.email,
     isServiceAccount: user.isServiceAccount,
+    role: user.role,
   };
 }
 

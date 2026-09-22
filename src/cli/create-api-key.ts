@@ -12,7 +12,7 @@ import { generateApiKey } from '../auth.js';
  *
  * Usage:
  *   pnpm create-api-key --org "Acme" --email agent@acme.dev \
- *     [--name "CI Agent"] [--label "ci key"] [--service-account]
+ *     [--name "CI Agent"] [--label "ci key"] [--service-account] [--admin]
  */
 
 type Flags = {
@@ -21,6 +21,7 @@ type Flags = {
   name?: string;
   label?: string;
   serviceAccount: boolean;
+  admin: boolean;
 };
 
 function parseFlags(argv: string[]): Flags {
@@ -34,7 +35,7 @@ function parseFlags(argv: string[]): Flags {
 
   if (!org || !email) {
     throw new Error(
-      'Usage: create-api-key --org <name> --email <email> [--name <display name>] [--label <label>] [--service-account]',
+      'Usage: create-api-key --org <name> --email <email> [--name <display name>] [--label <label>] [--service-account] [--admin]',
     );
   }
 
@@ -44,6 +45,7 @@ function parseFlags(argv: string[]): Flags {
     name: get('--name'),
     label: get('--label'),
     serviceAccount: argv.includes('--service-account'),
+    admin: argv.includes('--admin'),
   };
 }
 
@@ -60,6 +62,7 @@ async function main(): Promise<void> {
       email: flags.email,
       displayName: flags.name ?? flags.email,
       isServiceAccount: flags.serviceAccount,
+      role: flags.admin ? 'admin' : 'member',
     },
   });
 
