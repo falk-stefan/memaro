@@ -4,6 +4,7 @@ import { removeUndefinedAndValidate, UpdateValues } from './dto.util.js';
 import { toMemoryRelation } from '../dto/mapper/memory.mapper.js';
 import { loadMemaroConfig } from '../tools/tools.config.js';
 import { ApiError, NotFoundError } from '../error.js';
+import { resolveLegacyTenant } from '../db/legacy-tenant.js';
 
 const memaroConfig = await loadMemaroConfig();
 const verifyRelationTypeElseThrow = (value: string) => {
@@ -19,7 +20,12 @@ const verifyRelationTypeElseThrow = (value: string) => {
 export class MemoryRelationsService {
   static async createMemoryRelation(create: CreateMemoryRelation) {
     verifyRelationTypeElseThrow(create.type);
-    const memoryRelationEntity = await MemoryRelationEntity.create(create);
+
+    // Stopgap tenant until #8 threads the caller's real identity through —
+    // see src/db/legacy-tenant.ts.
+    const tenant = await resolveLegacyTenant();
+
+    const memoryRelationEntity = await MemoryRelationEntity.create({ ...create, ...tenant });
 
     return toMemoryRelation(memoryRelationEntity);
   }

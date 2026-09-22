@@ -10,6 +10,7 @@ import { toMemory, toMemorySearchResult } from '../dto/mapper/memory.mapper.js';
 import { verifyTypeElseThrow } from '../validation/verify.js';
 import { findTagsElseThrow } from './tag.service.js';
 import { MemoriesView } from '../db/view/memory.view.js';
+import { resolveLegacyTenant } from '../db/legacy-tenant.js';
 
 export class MemoryService {
   static async createMemory(create: CreateMemory): Promise<Memory> {
@@ -19,8 +20,12 @@ export class MemoryService {
 
     const embedding = await embedDocument(create.text);
 
+    // Stopgap tenant until #8 threads the caller's real identity through —
+    // see src/db/legacy-tenant.ts.
+    const tenant = await resolveLegacyTenant();
+
     const memoryEntity = await withTransaction(async (options) => {
-      const created = await MemoryEntity.create(create, options);
+      const created = await MemoryEntity.create({ ...create, ...tenant }, options);
       await created.$set('tags', tags, options);
 
       await upsertMemory({ memoryEntity: created, embedding, payload: create });

@@ -5,13 +5,18 @@ import { withTransaction } from '../db/db.util.js';
 import { toTag } from '../dto/mapper/tag.mapper.js';
 import { embedDocument, embedQuery } from './embedding.service.js';
 import { ApiError } from '../error.js';
+import { resolveLegacyTenant } from '../db/legacy-tenant.js';
 
 export class TagService {
   static async createTag(create: CreateTag) {
     const embedding = await embedDocument(create.description);
 
+    // Stopgap tenant until #8 threads the caller's real identity through —
+    // see src/db/legacy-tenant.ts.
+    const tenant = await resolveLegacyTenant();
+
     const tagEntity = await withTransaction(async (options) => {
-      const created = await TagEntity.create(create, options);
+      const created = await TagEntity.create({ ...create, orgId: tenant.orgId }, options);
       await upsertTag({ tagEntity: created, embedding, payload: create });
       return created;
     });
