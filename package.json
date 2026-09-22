@@ -14,6 +14,7 @@
     "ingest": "tsx src/cli/ingest.ts",
     "create-api-key": "tsx src/cli/create-api-key.ts",
     "backfill-memory-tenant": "tsx src/cli/backfill-memory-tenant.ts",
+    "check-worker-identity": "tsx src/cli/check-worker-identity.ts",
     "lint": "eslint src/",
     "lint:fix": "eslint --fix src/",
     "pretest": "tsoa spec-and-routes",
