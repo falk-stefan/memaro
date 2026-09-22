@@ -10,6 +10,7 @@ export type InstructionChunkResult = {
   headingPath: string[];
   text: string;
   sourceUrl: string;
+  lastReviewed: string | null;
 };
 
 export type InstructionDocSummary = {
@@ -19,11 +20,11 @@ export type InstructionDocSummary = {
   owner: string | null;
   scope: string;
   sourceUrl: string;
+  lastReviewed: string | null;
 };
 
 export type InstructionDocFull = InstructionDocSummary & {
   body: string;
-  lastReviewed: string | null;
 };
 
 export type ReadInstructionsResult =

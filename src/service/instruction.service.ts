@@ -37,12 +37,16 @@ type InstructionChunkPayload = {
   text: string;
   title: string;
   sourceUrl: string;
+  lastReviewed: string | null;
 };
 
 type ScoredPoint = {
   id: string | number;
   payload?: Record<string, unknown> | null;
 };
+
+const formatLastReviewed = (lastReviewed: Date | null): string | null =>
+  lastReviewed ? new Date(lastReviewed).toISOString().slice(0, 10) : null;
 
 const toDocSummary = (doc: InstructionDocEntity): InstructionDocSummary => ({
   docId: Number(doc.id),
@@ -51,12 +55,12 @@ const toDocSummary = (doc: InstructionDocEntity): InstructionDocSummary => ({
   owner: doc.owner,
   scope: doc.scope,
   sourceUrl: doc.sourceUrl,
+  lastReviewed: formatLastReviewed(doc.lastReviewed),
 });
 
 const toDocFull = (doc: InstructionDocEntity): InstructionDocFull => ({
   ...toDocSummary(doc),
   body: doc.body,
-  lastReviewed: doc.lastReviewed ? new Date(doc.lastReviewed).toISOString().slice(0, 10) : null,
 });
 
 // Reciprocal rank fusion: a point's fused score is the sum, across every
@@ -115,6 +119,7 @@ const packChunks = (points: ScoredPoint[]): PackResult<InstructionChunkResult> =
       headingPath: payload.headingPath,
       text: payload.text,
       sourceUrl: payload.sourceUrl,
+      lastReviewed: payload.lastReviewed,
     });
     usedChars += payload.text.length;
   }
@@ -136,6 +141,7 @@ const packBodies = (docs: InstructionDocEntity[]): PackResult<InstructionChunkRe
       headingPath: [],
       text: doc.body,
       sourceUrl: doc.sourceUrl,
+      lastReviewed: formatLastReviewed(doc.lastReviewed),
     });
     usedChars += doc.body.length;
   }

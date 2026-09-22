@@ -49,6 +49,9 @@ const indexChunks = async (doc: InstructionDocEntity): Promise<void> => {
         scope: doc.scope,
         owner: doc.owner,
         sourceUrl: doc.sourceUrl,
+        lastReviewed: doc.lastReviewed
+          ? new Date(doc.lastReviewed).toISOString().slice(0, 10)
+          : null,
       },
     })),
   );

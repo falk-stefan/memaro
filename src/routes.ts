@@ -132,12 +132,12 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "InstructionChunkResult": {
         "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"sourceUrl":{"dataType":"string","required":true},"text":{"dataType":"string","required":true},"headingPath":{"dataType":"array","array":{"dataType":"string"},"required":true},"title":{"dataType":"string","required":true},"docId":{"dataType":"double","required":true}},"validators":{}},
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"lastReviewed":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"sourceUrl":{"dataType":"string","required":true},"text":{"dataType":"string","required":true},"headingPath":{"dataType":"array","array":{"dataType":"string"},"required":true},"title":{"dataType":"string","required":true},"docId":{"dataType":"double","required":true}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "InstructionDocSummary": {
         "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"sourceUrl":{"dataType":"string","required":true},"scope":{"dataType":"string","required":true},"owner":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"contextTags":{"dataType":"array","array":{"dataType":"string"},"required":true},"title":{"dataType":"string","required":true},"docId":{"dataType":"double","required":true}},"validators":{}},
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"lastReviewed":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"sourceUrl":{"dataType":"string","required":true},"scope":{"dataType":"string","required":true},"owner":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"contextTags":{"dataType":"array","array":{"dataType":"string"},"required":true},"title":{"dataType":"string","required":true},"docId":{"dataType":"double","required":true}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "ReadInstructionsResult": {
@@ -157,7 +157,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "InstructionDocFull": {
         "dataType": "refAlias",
-        "type": {"dataType":"intersection","subSchemas":[{"ref":"InstructionDocSummary"},{"dataType":"nestedObjectLiteral","nestedProperties":{"lastReviewed":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"body":{"dataType":"string","required":true}}}],"validators":{}},
+        "type": {"dataType":"intersection","subSchemas":[{"ref":"InstructionDocSummary"},{"dataType":"nestedObjectLiteral","nestedProperties":{"body":{"dataType":"string","required":true}}}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 };
