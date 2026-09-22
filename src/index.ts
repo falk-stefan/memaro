@@ -58,9 +58,11 @@ async function expressMain() {
 }
 
 /**
- * Creates an MCP server with the given mode.
+ * Creates an MCP server bound to a single, already-resolved identity — a
+ * stdio session's identity is fixed for its lifetime (#5), so it's
+ * captured once here rather than re-resolved per tool call.
  */
-function createMcpServer() {
+function createMcpServer(identity: Identity) {
   const server = new McpServer({
     name: 'memaro',
     version: '0.0.1',
@@ -73,7 +75,7 @@ function createMcpServer() {
         description: tool.description,
         inputSchema: tool.inputSchema,
       },
-      async (input) => ToolService.callTool(tool.name, input),
+      async (input) => ToolService.callTool(tool.name, input, identity),
     );
   }
 
@@ -112,7 +114,7 @@ async function resolveStdioIdentity(): Promise<Identity> {
  */
 async function stdioMain() {
   const identity = await resolveStdioIdentity();
-  const server = createMcpServer();
+  const server = createMcpServer(identity);
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error(`Memaro MCP Server running on stdio as ${identity.email} (org ${identity.orgId})`);

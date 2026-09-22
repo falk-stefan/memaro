@@ -10,25 +10,28 @@ import { toMemory, toMemorySearchResult } from '../dto/mapper/memory.mapper.js';
 import { verifyTypeElseThrow } from '../validation/verify.js';
 import { findTagsElseThrow } from './tag.service.js';
 import { MemoriesView } from '../db/view/memory.view.js';
-import { resolveLegacyTenant } from '../db/legacy-tenant.js';
+import type { Identity } from '../auth.js';
 
 export class MemoryService {
-  static async createMemory(create: CreateMemory): Promise<Memory> {
+  static async createMemory(create: CreateMemory, identity: Identity): Promise<Memory> {
     verifyTypeElseThrow(create.type);
 
-    const tags = await findTagsElseThrow(create.tags);
+    const tags = await findTagsElseThrow(create.tags, identity);
 
     const embedding = await embedDocument(create.text);
 
-    // Stopgap tenant until #8 threads the caller's real identity through —
-    // see src/db/legacy-tenant.ts.
-    const tenant = await resolveLegacyTenant();
-
     const memoryEntity = await withTransaction(async (options) => {
-      const created = await MemoryEntity.create({ ...create, ...tenant }, options);
+      const created = await MemoryEntity.create(
+        { ...create, orgId: identity.orgId, userId: identity.userId },
+        options,
+      );
       await created.$set('tags', tags, options);
 
-      await upsertMemory({ memoryEntity: created, embedding, payload: create });
+      await upsertMemory({
+        memoryEntity: created,
+        embedding,
+        payload: { ...create, orgId: identity.orgId, userId: identity.userId },
+      });
 
       return created;
     });
@@ -36,7 +39,9 @@ export class MemoryService {
     return toMemory(memoryEntity);
   }
 
-  static async updateMemory({ id, values }: UpdateValues<UpdateMemory>) {
+  // `identity` isn't used for scoping/filtering yet (#8 is plumbing only —
+  // that's Milestone 3/#6) but every call site now has it available.
+  static async updateMemory({ id, values }: UpdateValues<UpdateMemory>, identity: Identity) {
     const sanitized = removeUndefinedAndValidate(values);
 
     const memoryEntity = await MemoryEntity.findOne({ where: { id } });
@@ -56,7 +61,7 @@ export class MemoryService {
     await memoryEntity.update(sanitized);
   }
 
-  static async getMemory(id: string): Promise<Memory> {
+  static async getMemory(id: string, identity: Identity): Promise<Memory> {
     const memoryEntity = await MemoryEntity.findOne({ where: { id } });
     if (!memoryEntity) {
       throw new NotFoundError('memory');
@@ -64,7 +69,7 @@ export class MemoryService {
     return toMemory(memoryEntity);
   }
 
-  static async getMemories(query: MemoryQuery) {
+  static async getMemories(query: MemoryQuery, identity: Identity) {
     const { text, type, limit = 10 } = query;
 
     const embedding = await embedQuery(text);
@@ -84,7 +89,7 @@ export class MemoryService {
     return toMemorySearchResult(memories, qdrantResult);
   }
 
-  static async deleteMemory(id: string) {
+  static async deleteMemory(id: string, identity: Identity) {
     const memoryEntity = await MemoryEntity.findOne({ where: { id } });
     if (!memoryEntity) {
       throw new NotFoundError('memory');
@@ -102,7 +107,7 @@ export class MemoryService {
 const upsertMemory = async (params: {
   memoryEntity: MemoryEntity;
   embedding: number[];
-  payload: CreateMemory | UpdateMemory;
+  payload: (CreateMemory & { orgId: string; userId: string }) | UpdateMemory;
 }) => {
   try {
     await qdrantClient.upsert('memory', {

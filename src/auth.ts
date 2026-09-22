@@ -97,3 +97,17 @@ export async function apiKeyAuth(req: Request, _res: Response, next: NextFunctio
   req.user = identity;
   next();
 }
+
+/**
+ * Narrows `req.user` (optional, since it's set by middleware rather than
+ * the type system) to `Identity` for controllers — every route reaching a
+ * controller already passed `apiKeyAuth`, so this should never actually be
+ * undefined; the check is defense in depth, not the primary enforcement.
+ */
+export function requireIdentity(req: Request): Identity {
+  if (!req.user) {
+    throw new UnauthorizedError();
+  }
+
+  return req.user;
+}

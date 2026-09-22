@@ -5,25 +5,23 @@ import { withTransaction } from '../db/db.util.js';
 import { toTag } from '../dto/mapper/tag.mapper.js';
 import { embedDocument, embedQuery } from './embedding.service.js';
 import { ApiError } from '../error.js';
-import { resolveLegacyTenant } from '../db/legacy-tenant.js';
+import type { Identity } from '../auth.js';
 
 export class TagService {
-  static async createTag(create: CreateTag) {
+  static async createTag(create: CreateTag, identity: Identity) {
     const embedding = await embedDocument(create.description);
 
-    // Stopgap tenant until #8 threads the caller's real identity through —
-    // see src/db/legacy-tenant.ts.
-    const tenant = await resolveLegacyTenant();
-
     const tagEntity = await withTransaction(async (options) => {
-      const created = await TagEntity.create({ ...create, orgId: tenant.orgId }, options);
+      const created = await TagEntity.create({ ...create, orgId: identity.orgId }, options);
       await upsertTag({ tagEntity: created, embedding, payload: create });
       return created;
     });
     return toTag(tagEntity);
   }
 
-  static async getTags(query: TagQuery) {
+  // `identity` isn't used for scoping/filtering yet (#8 is plumbing only —
+  // that's Milestone 3/#6) but every call site now has it available.
+  static async getTags(query: TagQuery, identity: Identity) {
     const { text, limit = 10 } = query;
 
     const embedding = await embedQuery(text);
@@ -64,7 +62,7 @@ const upsertTag = async (params: {
   }
 };
 
-export const findTagsElseThrow = async (tags?: string[]) => {
+export const findTagsElseThrow = async (tags: string[] | undefined, identity: Identity) => {
   if (!tags || !tags.length) {
     return [];
   }
