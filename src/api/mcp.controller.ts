@@ -1,8 +1,10 @@
-import { Body, Post, Route } from '@tsoa/runtime';
+import { Body, Post, Request, Route } from '@tsoa/runtime';
+import type { Request as ExpressRequest } from 'express';
 import { McpService } from '../service/mcp.service.js';
 import { ApiError } from '../error.js';
 import { ToolService } from '../tools/tools.service.js';
 import { JsonRpcRequest } from '../dto/mcp.dto.js';
+import { requireIdentity } from '../auth.js';
 
 type ToolCallParams = { name: string; arguments?: unknown };
 
@@ -14,7 +16,7 @@ const isToolCallParams = (params: unknown): params is ToolCallParams =>
 @Route('/mcp')
 export class McpController {
   @Post()
-  public async callMcp(@Body() body: JsonRpcRequest) {
+  public async callMcp(@Body() body: JsonRpcRequest, @Request() request: ExpressRequest) {
     if (body.method.startsWith('notifications/')) {
       return;
     }
@@ -44,7 +46,11 @@ export class McpController {
             error: { code: -32602, message: 'Invalid params: expected { name, arguments }' },
           };
         }
-        const result = await ToolService.callTool(body.params.name, body.params.arguments);
+        const result = await ToolService.callTool(
+          body.params.name,
+          body.params.arguments,
+          requireIdentity(request),
+        );
         return { jsonrpc: '2.0', id: sessionId, result };
       }
       default:

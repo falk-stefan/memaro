@@ -4,6 +4,11 @@ import { MemoryRelationEntity } from './table/memory-relation.entity.js';
 import { TagEntity } from './table/tag.entity.js';
 import { MemoryTagEntity } from './table/memory-tag.entity.js';
 import { InstructionDocEntity } from './table/instruction-doc.entity.js';
+import { OrgEntity } from './table/org.entity.js';
+import { TeamEntity } from './table/team.entity.js';
+import { UserEntity } from './table/user.entity.js';
+import { TeamMemberEntity } from './table/team-member.entity.js';
+import { ApiKeyEntity } from './table/api-key.entity.js';
 
 export const sequelizeClient = new Sequelize({
   dialect: 'postgres',
@@ -12,6 +17,17 @@ export const sequelizeClient = new Sequelize({
   username: 'postgres',
   password: 'postgres',
   database: 'memaro',
-  models: [MemoryEntity, MemoryRelationEntity, MemoryTagEntity, TagEntity, InstructionDocEntity],
+  models: [
+    MemoryEntity,
+    MemoryRelationEntity,
+    MemoryTagEntity,
+    TagEntity,
+    InstructionDocEntity,
+    OrgEntity,
+    TeamEntity,
+    UserEntity,
+    TeamMemberEntity,
+    ApiKeyEntity,
+  ],
   logging: false,
 });

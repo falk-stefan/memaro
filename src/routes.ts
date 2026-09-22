@@ -179,6 +179,7 @@ export function RegisterRoutes(app: Router) {
     
         const argsTagController_createTag: Record<string, TsoaRoute.ParameterSchema> = {
                 create: {"in":"body","name":"create","required":true,"ref":"CreateTag"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
         app.post('/v1/tags',
             ...(fetchMiddlewares<RequestHandler>(TagController)),
@@ -209,6 +210,7 @@ export function RegisterRoutes(app: Router) {
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsTagController_getTags: Record<string, TsoaRoute.ParameterSchema> = {
                 query: {"in":"queries","name":"query","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"limit":{"dataType":"double"},"text":{"dataType":"string","required":true}}},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
         app.get('/v1/tags',
             ...(fetchMiddlewares<RequestHandler>(TagController)),
@@ -239,6 +241,7 @@ export function RegisterRoutes(app: Router) {
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsMemoryController_createMemory: Record<string, TsoaRoute.ParameterSchema> = {
                 create: {"in":"body","name":"create","required":true,"ref":"CreateMemory"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
         app.post('/v1/memories',
             ...(fetchMiddlewares<RequestHandler>(MemoryController)),
@@ -270,6 +273,7 @@ export function RegisterRoutes(app: Router) {
         const argsMemoryController_updateMemory: Record<string, TsoaRoute.ParameterSchema> = {
                 id: {"in":"path","name":"id","required":true,"dataType":"string"},
                 update: {"in":"body","name":"update","required":true,"ref":"UpdateMemory"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
         app.patch('/v1/memories/:id',
             ...(fetchMiddlewares<RequestHandler>(MemoryController)),
@@ -300,6 +304,7 @@ export function RegisterRoutes(app: Router) {
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsMemoryController_getMemories: Record<string, TsoaRoute.ParameterSchema> = {
                 query: {"in":"queries","name":"query","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"limit":{"dataType":"double"},"type":{"dataType":"string"},"text":{"dataType":"string","required":true}}},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
         app.get('/v1/memories',
             ...(fetchMiddlewares<RequestHandler>(MemoryController)),
@@ -330,6 +335,7 @@ export function RegisterRoutes(app: Router) {
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsMemoryController_deleteMemory: Record<string, TsoaRoute.ParameterSchema> = {
                 id: {"in":"path","name":"id","required":true,"dataType":"string"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
         app.delete('/v1/memories/:id',
             ...(fetchMiddlewares<RequestHandler>(MemoryController)),
@@ -360,6 +366,7 @@ export function RegisterRoutes(app: Router) {
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsMemoryRelationsController_createMemoryRelation: Record<string, TsoaRoute.ParameterSchema> = {
                 create: {"in":"body","name":"create","required":true,"ref":"CreateMemoryRelation"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
         app.post('/v1/memory-relations',
             ...(fetchMiddlewares<RequestHandler>(MemoryRelationsController)),
@@ -391,6 +398,7 @@ export function RegisterRoutes(app: Router) {
         const argsMemoryRelationsController_updateMemoryRelation: Record<string, TsoaRoute.ParameterSchema> = {
                 id: {"in":"path","name":"id","required":true,"dataType":"string"},
                 update: {"in":"body","name":"update","required":true,"ref":"UpdateMemoryRelation"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
         app.patch('/v1/memory-relations/:id',
             ...(fetchMiddlewares<RequestHandler>(MemoryRelationsController)),
@@ -421,6 +429,7 @@ export function RegisterRoutes(app: Router) {
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsMemoryRelationsController_deleteMemoryRelation: Record<string, TsoaRoute.ParameterSchema> = {
                 id: {"in":"path","name":"id","required":true,"dataType":"string"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
         app.delete('/v1/memory-relations/:id',
             ...(fetchMiddlewares<RequestHandler>(MemoryRelationsController)),
@@ -451,6 +460,7 @@ export function RegisterRoutes(app: Router) {
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsMcpController_callMcp: Record<string, TsoaRoute.ParameterSchema> = {
                 body: {"in":"body","name":"body","required":true,"ref":"JsonRpcRequest"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
         app.post('/mcp',
             ...(fetchMiddlewares<RequestHandler>(McpController)),

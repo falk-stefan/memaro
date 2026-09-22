@@ -5,6 +5,7 @@ import { sequelizeClient } from './db/sequelize.js';
 import express, { json, urlencoded } from 'express';
 import { RegisterRoutes } from './routes.js';
 import { ApiError } from './error.js';
+import { apiKeyAuth, resolveApiKey, type Identity } from './auth.js';
 
 /**
  * Main function for the express server.
@@ -30,6 +31,10 @@ async function expressMain() {
     res.send('Hello World!!');
   });
 
+  // Everything below requires a valid API key — '/' above is the only
+  // unauthenticated route, serving as a health check.
+  app.use(apiKeyAuth);
+
   RegisterRoutes(app);
 
   app.use(
@@ -53,9 +58,11 @@ async function expressMain() {
 }
 
 /**
- * Creates an MCP server with the given mode.
+ * Creates an MCP server bound to a single, already-resolved identity — a
+ * stdio session's identity is fixed for its lifetime (#5), so it's
+ * captured once here rather than re-resolved per tool call.
  */
-function createMcpServer() {
+function createMcpServer(identity: Identity) {
   const server = new McpServer({
     name: 'memaro',
     version: '0.0.1',
@@ -68,7 +75,7 @@ function createMcpServer() {
         description: tool.description,
         inputSchema: tool.inputSchema,
       },
-      async (input) => ToolService.callTool(tool.name, input),
+      async (input) => ToolService.callTool(tool.name, input, identity),
     );
   }
 
@@ -76,13 +83,41 @@ function createMcpServer() {
 }
 
 /**
+ * Resolves the stdio session's identity once, at process startup, from
+ * `MEMARO_API_KEY` — reusing the same resolution logic HTTP auth uses
+ * (#4). A stdio process has no per-call headers, so this is the only
+ * chance to bind identity; a missing or invalid key fails loudly rather
+ * than falling back to a silent anonymous session. Kept local to
+ * stdioMain() rather than shared module state, so it can never leak into
+ * `standalone` mode's independently-authenticated HTTP requests.
+ */
+async function resolveStdioIdentity(): Promise<Identity> {
+  const apiKey = process.env.MEMARO_API_KEY;
+
+  if (!apiKey) {
+    throw new Error(
+      'MEMARO_API_KEY is required to start stdio mode — see README "Connecting via stdio".',
+    );
+  }
+
+  const identity = await resolveApiKey(apiKey);
+
+  if (!identity) {
+    throw new Error('MEMARO_API_KEY is invalid or has been revoked.');
+  }
+
+  return identity;
+}
+
+/**
  * Main function for the stdio MCP server.
  */
 async function stdioMain() {
-  const server = createMcpServer();
+  const identity = await resolveStdioIdentity();
+  const server = createMcpServer(identity);
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('Memaro MCP Server running on stdio');
+  console.error(`Memaro MCP Server running on stdio as ${identity.email} (org ${identity.orgId})`);
 }
 
 function main(mode: string = 'standalone') {

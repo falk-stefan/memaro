@@ -17,6 +17,7 @@ import { MemoryRelationsService } from '../service/memory-relations.service.js';
 import { TagService } from '../service/tag.service.js';
 import { InstructionService } from '../service/instruction.service.js';
 import { NotFoundError } from '../error.js';
+import type { Identity } from '../auth.js';
 
 type Tool<T extends ZodObject<any>> = {
   name:
@@ -32,7 +33,7 @@ type Tool<T extends ZodObject<any>> = {
     | 'get_instruction';
   description: string;
   inputSchema: T;
-  handler: (input: never) => Promise<unknown>;
+  handler: (input: never, identity: Identity) => Promise<unknown>;
 };
 
 const config = await loadMemaroConfig();
@@ -135,12 +136,12 @@ export class ToolService {
     }));
   }
 
-  static async callTool(name: string, args: unknown) {
+  static async callTool(name: string, args: unknown, identity: Identity) {
     const tool = TOOLS.find((candidate) => candidate.name === name);
     if (!tool) {
       throw new NotFoundError(`tool: ${name}`);
     }
-    const result = await tool.handler(args as never);
+    const result = await tool.handler(args as never, identity);
     return toCallToolResult(result);
   }
 }
