@@ -14,3 +14,13 @@ build
 # Dev
 postgres_data
 qdrant_data
+
+# Local source directories dropped in by users (Milestone 1, Iteration 2) —
+# the directory itself is tracked as the docker-compose bind mount target,
+# its contents are not.
+data/*
+!data/todo-app
+!data/.gitkeep
+
+# Misc.
+roadmap

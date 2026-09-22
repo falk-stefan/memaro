@@ -1,7 +1,7 @@
 module.exports = {
     dialect: 'postgres',
-    host: 'localhost',
-    port: 5433,
+    host: process.env.DB_HOST ?? 'localhost',
+    port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 5433,
     username: 'postgres',
     password: 'postgres',
     database: 'memaro',

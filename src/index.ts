@@ -1,17 +1,15 @@
-import {McpServer} from "@modelcontextprotocol/sdk/server/mcp.js";
-import {TOOLS} from "./tools/tools.service.js";
-import {StdioServerTransport} from "@modelcontextprotocol/sdk/server/stdio.js";
-import {sequelizeClient} from "./db/sequelize.js";
-import express, {json, urlencoded} from "express";
-import {RegisterRoutes} from "./routes.js";
-import {ApiError} from "./error.js";
-
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { TOOLS, ToolService } from './tools/tools.service.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { sequelizeClient } from './db/sequelize.js';
+import express, { json, urlencoded } from 'express';
+import { RegisterRoutes } from './routes.js';
+import { ApiError } from './error.js';
 
 /**
  * Main function for the express server.
  */
 async function expressMain() {
-
   // Initialize database
   await sequelizeClient.sync();
 
@@ -20,7 +18,7 @@ async function expressMain() {
   app.use(
     urlencoded({
       extended: true,
-    })
+    }),
   );
 
   app.use(json());
@@ -34,18 +32,19 @@ async function expressMain() {
 
   RegisterRoutes(app);
 
-  app.use((err: unknown, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    if (res.headersSent) {
-      return next(err)
-    }
+  app.use(
+    (err: unknown, req: express.Request, res: express.Response, next: express.NextFunction) => {
+      if (res.headersSent) {
+        return next(err);
+      }
 
-    if (err instanceof ApiError) {
-      return res.status(err.code).send(err);
-    }
+      if (err instanceof ApiError) {
+        return res.status(err.code).send(err);
+      }
 
-    res.status(500)
-      .send(new ApiError(500, "An unexpected error occurred."));
-  });
+      res.status(500).send(new ApiError(500, 'An unexpected error occurred.'));
+    },
+  );
 
   const PORT = process.env.PORT ?? 2999;
   app.listen(PORT, () => {
@@ -53,35 +52,24 @@ async function expressMain() {
   });
 }
 
-
 /**
  * Creates an MCP server with the given mode.
  */
 function createMcpServer() {
   const server = new McpServer({
-    name: "memaro",
-    version: "0.0.1",
+    name: 'memaro',
+    version: '0.0.1',
   });
 
   for (const tool of TOOLS) {
-    server.registerTool(tool.name, {
-      description: tool.description,
-      inputSchema: tool.inputSchema,
-    }, async (input) => {
-      console.error("input", input);
-      const result = await tool.handler(input as never);
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(result),
-            annotations: {
-              audience: ['assistant'],
-            },
-          }
-        ]
-      }
-    });
+    server.registerTool(
+      tool.name,
+      {
+        description: tool.description,
+        inputSchema: tool.inputSchema,
+      },
+      async (input) => ToolService.callTool(tool.name, input),
+    );
   }
 
   return server;
@@ -91,34 +79,32 @@ function createMcpServer() {
  * Main function for the stdio MCP server.
  */
 async function stdioMain() {
-  const server = createMcpServer()
+  const server = createMcpServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("Memaro MCP Server running on stdio");
+  console.error('Memaro MCP Server running on stdio');
 }
 
-
 function main(mode: string = 'standalone') {
-
   if (!['client', 'standalone', 'server'].includes(mode)) {
     throw new Error(`Unknown mode: ${mode}`);
   }
 
-  console.error("Memaro starting in mode:", mode);
+  console.error('Memaro starting in mode:', mode);
 
   switch (mode) {
     case 'client':
       stdioMain().catch((error) => {
-        console.error("Fatal error in main():", error);
+        console.error('Fatal error in main():', error);
         process.exit(1);
       });
       break;
     case 'standalone':
       stdioMain().catch((error) => {
-        console.error("Fatal error in main():", error);
+        console.error('Fatal error in main():', error);
         process.exit(1);
       });
-      expressMain().then( );
+      expressMain().then();
       break;
     case 'server':
       expressMain().then();

@@ -1,19 +1,23 @@
-import {RelatedMemory} from "./memory-relation.dto.js";
-import {CreateMemorySchema, GetMemoriesSchema, UpdateMemorySchema} from "../tools/tools.schema.js";
-import {z} from "zod";
+import { RelatedMemory } from './memory-relation.dto.js';
+import {
+  CreateMemorySchema,
+  GetMemoriesSchema,
+  UpdateMemorySchema,
+} from '../tools/tools.schema.js';
+import { z } from 'zod';
 
-export type CreateMemory = z.infer<typeof CreateMemorySchema>
+export type CreateMemory = z.infer<typeof CreateMemorySchema>;
 
-export type UpdateMemory = z.infer<typeof UpdateMemorySchema>['values']
+export type UpdateMemory = z.infer<typeof UpdateMemorySchema>['values'];
 
 export type Memory = {
-    id: string;
-    text: string;
-    createdAt: Date;
-    type: string;
-    relatedMemories: RelatedMemory[];
-}
+  id: string;
+  text: string;
+  createdAt: Date;
+  type: string;
+  relatedMemories: RelatedMemory[];
+};
 
-export type MemorySearchResult = (Memory & { score: number; })[]
+export type MemorySearchResult = (Memory & { score: number })[];
 
-export type MemoryQuery = z.infer<typeof GetMemoriesSchema>
+export type MemoryQuery = z.infer<typeof GetMemoriesSchema>;

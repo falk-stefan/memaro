@@ -1,0 +1,8 @@
+git:
+  pull: false
+scope: org
+tags:
+  - path: "agent/**"
+    add: ["agent-instructions"]
+  - path: "product/**"
+    add: ["product-docs"]

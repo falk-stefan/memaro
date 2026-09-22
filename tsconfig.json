@@ -40,5 +40,6 @@
     "skipLibCheck": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": false
-  }
+  },
+  "exclude": ["node_modules", "dist", "src/**/*.test.ts"]
 }
