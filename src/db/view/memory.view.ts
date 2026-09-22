@@ -1,7 +1,7 @@
 import { MemoryRelationEntity } from '../table/memory-relation.entity.js';
 import { MemoryEntity } from '../table/memory.entity.js';
 
-export const MemoriesView = ({ ids }: { ids: (number | string)[] }) => ({
+export const MemoriesView = ({ ids, userId }: { ids: (number | string)[]; userId?: string }) => ({
   attributes: ['id', 'text', 'type'],
   include: [
     {
@@ -17,5 +17,5 @@ export const MemoriesView = ({ ids }: { ids: (number | string)[] }) => ({
       limit: 10,
     },
   ],
-  where: { id: ids },
+  where: userId ? { id: ids, userId } : { id: ids },
 });

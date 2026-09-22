@@ -18,3 +18,15 @@ export class NotFoundError extends ApiError {
     super(404, `Not Found${resource ? `: ${resource}` : ''}}`);
   }
 }
+
+export class UnauthorizedError extends ApiError {
+  constructor(message: string = 'Unauthorized') {
+    super(401, message);
+  }
+}
+
+export class ForbiddenError extends ApiError {
+  constructor(message: string = 'Forbidden') {
+    super(403, message);
+  }
+}

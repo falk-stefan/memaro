@@ -1,4 +1,5 @@
-import { Column, DataType, Model, Table } from 'sequelize-typescript';
+import { BelongsTo, Column, DataType, Model, Table } from 'sequelize-typescript';
+import { OrgEntity } from './org.entity.js';
 
 type TagAttributes = {
   id: string;
@@ -6,11 +7,13 @@ type TagAttributes = {
   updatedAt: Date;
   name: string;
   description: string;
+  orgId: string;
 };
 
 type CreateTagAttributes = {
   name: string;
   description: string;
+  orgId: string;
 };
 
 @Table({ tableName: 'tag' })
@@ -29,4 +32,10 @@ export class TagEntity extends Model<TagAttributes, CreateTagAttributes> {
 
   @Column({ type: DataType.TEXT })
   declare description: string;
+
+  @Column({ type: DataType.BIGINT })
+  declare orgId: string;
+
+  @BelongsTo(() => OrgEntity, { foreignKey: 'orgId' })
+  declare org: OrgEntity;
 }

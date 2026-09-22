@@ -1,5 +1,7 @@
 import { BelongsTo, Column, DataType, Model, Table } from 'sequelize-typescript';
 import { MemoryEntity } from './memory.entity.js';
+import { OrgEntity } from './org.entity.js';
+import { UserEntity } from './user.entity.js';
 
 type MemoryRelationAttributes = {
   id: string;
@@ -8,12 +10,16 @@ type MemoryRelationAttributes = {
   sourceId: string;
   targetId: string;
   type: string;
+  orgId: string;
+  userId: string;
 };
 
 type CreateMemoryRelationAttributes = {
   sourceId: string;
   targetId: string;
   type: string;
+  orgId: string;
+  userId: string;
 };
 
 @Table({ tableName: 'related_memory' })
@@ -39,9 +45,21 @@ export class MemoryRelationEntity extends Model<
   @Column({ type: DataType.BIGINT })
   declare targetId: string;
 
+  @Column({ type: DataType.BIGINT })
+  declare orgId: string;
+
+  @Column({ type: DataType.BIGINT })
+  declare userId: string;
+
   @BelongsTo(() => MemoryEntity, { foreignKey: 'sourceId', as: 'source' })
   declare source: MemoryEntity;
 
   @BelongsTo(() => MemoryEntity, { foreignKey: 'targetId', as: 'target' })
   declare target: MemoryEntity;
+
+  @BelongsTo(() => OrgEntity, { foreignKey: 'orgId' })
+  declare org: OrgEntity;
+
+  @BelongsTo(() => UserEntity, { foreignKey: 'userId' })
+  declare user: UserEntity;
 }

@@ -5,10 +5,12 @@ update, and link short text memories, and read curated, human-owned
 instruction documents (`read_instructions`) — all through MCP tools or a
 REST API. Everything is embedded locally and indexed for semantic search.
 
-**Status**: single-tenant, no auth (`src/auth.ts` is a stub) — everything
-is global and unscoped. What exists today: personal memory (CRUD + semantic
-search) and a read-only instructions layer. Not yet built: multi-tenancy,
-a shared/team memory tier, or any governance/lifecycle tooling.
+**Status**: identity exists (org/team/user + API-key auth on both HTTP and
+MCP stdio) but nothing is scoped or access-controlled by it yet — every
+memory row is still global. What exists today: personal memory (CRUD +
+semantic search) and a read-only instructions layer. Not yet built: RBAC
+enforcement, memory tenant scoping, a shared/team memory tier, or any
+governance/lifecycle tooling.
 
 ## Stack
 
@@ -22,7 +24,8 @@ a shared/team memory tier, or any governance/lifecycle tooling.
 ```bash
 docker compose up -d   # Postgres (5433) + Qdrant (6333/6334)
 pnpm install
-pnpm dev                # http://localhost:2999 + stdio MCP
+pnpm create-api-key --org "Dev" --email you@example.com   # prints a key, once
+MEMARO_API_KEY=<key from above> pnpm dev   # http://localhost:2999 + stdio MCP
 ```
 
 Production: `pnpm build && pnpm start`.
@@ -68,7 +71,7 @@ agent instructions + product/architecture docs) — try it with:
 
 ```bash
 pnpm ingest
-MEMARO_CONFIG=./config.taskly.example.yaml pnpm dev
+MEMARO_API_KEY=<key> MEMARO_CONFIG=./config.taskly.example.yaml pnpm dev
 ```
 
 then `read_instructions({ context: "how does task recurrence work" })`.
@@ -87,23 +90,31 @@ then `read_instructions({ context: "how does task recurrence work" })`.
 | `search_tags` | Search for tags by text |
 | `add_tag` | Create a new tag |
 
-Connect via stdio:
+Connect via stdio — `MEMARO_API_KEY` (from `pnpm create-api-key`) binds the
+session's identity once, at startup; a missing or invalid key refuses to
+start:
 
 ```json
 {
   "mcpServers": {
     "memaro": {
       "command": "node",
-      "args": ["/path/to/memaro/dist/index.js", "client"]
+      "args": ["/path/to/memaro/dist/index.js", "client"],
+      "env": {
+        "MEMARO_API_KEY": "<key from `pnpm create-api-key`>"
+      }
     }
   }
 }
 ```
 
 Or via HTTP JSON-RPC at `POST /mcp` (`initialize`, `tools/list`,
-`tools/call`).
+`tools/call`), authenticated the same way as the REST API below.
 
 ## REST API
+
+Every route below requires `Authorization: Bearer <key>` (from
+`pnpm create-api-key`) — a missing or invalid key gets a 401.
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -125,3 +136,4 @@ Or via HTTP JSON-RPC at `POST /mcp` (`initialize`, `tools/list`,
 | `PORT` | `2999` | HTTP server port |
 | `MEMARO_CONFIG` | `./config.yaml` | Path to the config file |
 | `MEMARO_DATA_DIR` | `./data` | Root directory `pnpm ingest` scans for sources |
+| `MEMARO_API_KEY` | _(none)_ | Binds a stdio session's identity (`client`/`standalone` modes) — required, refuses to start without it |
