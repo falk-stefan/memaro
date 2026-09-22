@@ -12,6 +12,7 @@
     "db:migrate": "ts-node -r tsconfig-paths/register ./node_modules/sequelize-cli/lib/sequelize db:migrate",
     "db:migrate:undo": "ts-node -r tsconfig-paths/register ./node_modules/sequelize-cli/lib/sequelize db:migrate:undo",
     "ingest": "tsx src/cli/ingest.ts",
+    "create-api-key": "tsx src/cli/create-api-key.ts",
     "lint": "eslint src/",
     "lint:fix": "eslint --fix src/",
     "pretest": "tsoa spec-and-routes",

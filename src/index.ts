@@ -5,6 +5,7 @@ import { sequelizeClient } from './db/sequelize.js';
 import express, { json, urlencoded } from 'express';
 import { RegisterRoutes } from './routes.js';
 import { ApiError } from './error.js';
+import { apiKeyAuth } from './auth.js';
 
 /**
  * Main function for the express server.
@@ -29,6 +30,10 @@ async function expressMain() {
   app.post('/', (req, res) => {
     res.send('Hello World!!');
   });
+
+  // Everything below requires a valid API key — '/' above is the only
+  // unauthenticated route, serving as a health check.
+  app.use(apiKeyAuth);
 
   RegisterRoutes(app);
 

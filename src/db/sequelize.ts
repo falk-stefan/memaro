@@ -8,6 +8,7 @@ import { OrgEntity } from './table/org.entity.js';
 import { TeamEntity } from './table/team.entity.js';
 import { UserEntity } from './table/user.entity.js';
 import { TeamMemberEntity } from './table/team-member.entity.js';
+import { ApiKeyEntity } from './table/api-key.entity.js';
 
 export const sequelizeClient = new Sequelize({
   dialect: 'postgres',
@@ -26,6 +27,7 @@ export const sequelizeClient = new Sequelize({
     TeamEntity,
     UserEntity,
     TeamMemberEntity,
+    ApiKeyEntity,
   ],
   logging: false,
 });
