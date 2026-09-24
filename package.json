@@ -13,6 +13,7 @@
     "db:migrate:undo": "ts-node -r tsconfig-paths/register ./node_modules/sequelize-cli/lib/sequelize db:migrate:undo",
     "ingest": "tsx src/cli/ingest.ts",
     "create-api-key": "tsx src/cli/create-api-key.ts",
+    "create-api-key:dev": "tsx src/cli/create-api-key.ts --org Dev --email dev@memaro.local --name Dev --label dev",
     "backfill-memory-tenant": "tsx src/cli/backfill-memory-tenant.ts",
     "check-worker-identity": "tsx src/cli/check-worker-identity.ts",
     "lint": "eslint src/",

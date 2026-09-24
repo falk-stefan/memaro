@@ -24,7 +24,7 @@ governance/lifecycle tooling.
 ```bash
 docker compose up -d   # Postgres (5433) + Qdrant (6333/6334)
 pnpm install
-pnpm create-api-key --org "Dev" --email you@example.com   # prints a key, once
+pnpm create-api-key:dev   # prints a key, once (or: pnpm create-api-key --org <org> --email <email>)
 MEMARO_API_KEY=<key from above> pnpm dev   # http://localhost:2999 + stdio MCP
 ```
 
