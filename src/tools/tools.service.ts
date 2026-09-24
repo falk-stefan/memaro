@@ -117,11 +117,13 @@ export const TOOLS: Tool<ZodObject<any>>[] = [
 // The MCP `tools/call` response shape (a `content` block array), used
 // identically by the stdio transport (src/index.ts) and the HTTP JSON-RPC
 // transport (McpController) so the two never drift apart.
-const toCallToolResult = (result: unknown) => ({
+// Handlers that return nothing (delete/update) still need a text block, and
+// JSON.stringify(undefined) yields undefined rather than a string.
+export const toCallToolResult = (result: unknown) => ({
   content: [
     {
       type: 'text' as const,
-      text: JSON.stringify(result),
+      text: JSON.stringify(result ?? { success: true }),
       annotations: { audience: ['assistant' as const] },
     },
   ],

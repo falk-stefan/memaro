@@ -15,7 +15,7 @@ export class BadRequestError extends ApiError {
 
 export class NotFoundError extends ApiError {
   constructor(resource?: string) {
-    super(404, `Not Found${resource ? `: ${resource}` : ''}}`);
+    super(404, `Not Found${resource ? `: ${resource}` : ''}`);
   }
 }
 
