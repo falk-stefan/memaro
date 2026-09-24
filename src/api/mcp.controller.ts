@@ -1,7 +1,7 @@
 import { Body, Post, Request, Route } from '@tsoa/runtime';
 import type { Request as ExpressRequest } from 'express';
 import { McpService } from '../service/mcp.service.js';
-import { ApiError } from '../error.js';
+import { BadRequestError } from '../error.js';
 import { ToolService } from '../tools/tools.service.js';
 import { JsonRpcRequest } from '../dto/mcp.dto.js';
 import { requireIdentity } from '../auth.js';
@@ -21,19 +21,21 @@ export class McpController {
       return;
     }
 
-    const sessionId = body.id;
+    // A JSON-RPC request id only correlates a response with its request —
+    // clients may use strings or numbers, and it is echoed back unchanged.
+    const id = body.id;
 
-    if (typeof sessionId !== 'string') {
-      throw new ApiError(403, 'Invalid sessionId');
+    if (id === undefined) {
+      throw new BadRequestError('Missing JSON-RPC request id');
     }
 
     switch (body.method) {
       case 'initialize':
-        return McpService.initialize(sessionId);
+        return McpService.initialize(id);
       case 'tools/list':
         return {
           jsonrpc: '2.0',
-          id: sessionId,
+          id,
           result: {
             tools: await ToolService.getTools(),
           },
@@ -42,7 +44,7 @@ export class McpController {
         if (!isToolCallParams(body.params)) {
           return {
             jsonrpc: '2.0',
-            id: sessionId,
+            id,
             error: { code: -32602, message: 'Invalid params: expected { name, arguments }' },
           };
         }
@@ -51,12 +53,12 @@ export class McpController {
           body.params.arguments,
           requireIdentity(request),
         );
-        return { jsonrpc: '2.0', id: sessionId, result };
+        return { jsonrpc: '2.0', id, result };
       }
       default:
         return {
           jsonrpc: '2.0',
-          id: sessionId,
+          id,
           error: {
             code: -32601,
             message: 'Method not found',

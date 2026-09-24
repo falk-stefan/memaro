@@ -1,16 +1,14 @@
-import { loadMemaroConfig } from '../tools/tools.config.js';
+import type { JsonRpcId } from '../dto/mcp.dto.js';
 
 export class McpService {
-  static async initialize(sessionId: string) {
-    const config = await loadMemaroConfig();
-
+  static async initialize(id: JsonRpcId) {
     return {
       jsonrpc: '2.0',
-      id: sessionId,
+      id,
       result: {
         protocolVersion: '2025-06-18',
         capabilities: {
-          tools: config.tools,
+          tools: {},
         },
         serverInfo: {
           name: 'memaro-http',
